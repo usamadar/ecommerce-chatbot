@@ -8,6 +8,7 @@ import { OrderCard } from '@/components/order-card'
 import { ProductCard } from '@/components/product-card'
 import { ReturnPolicyCard } from '@/components/return-policy-card'
 import { useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown'
 
 export default function ChatInterface() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
@@ -62,13 +63,32 @@ export default function ChatInterface() {
                     )
                   )) && (
                     <span
-                      className={`inline-block p-4 rounded-2xl max-w-[85%] whitespace-pre-wrap ${
-                        message.role === 'user'
-                          ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
-                          : 'bg-gray-100 text-gray-800 rounded-bl-none shadow-sm'
+                      className={`chat-message ${
+                        message.role === 'user' 
+                          ? 'chat-message-user' 
+                          : 'chat-message-assistant'
                       }`}
                     >
-                      {message.content}
+                      <ReactMarkdown
+                        className={`markdown-content ${
+                          message.role === 'user'
+                            ? 'markdown-content-user'
+                            : 'markdown-content-assistant'
+                        }`}
+                        components={{
+                          a: ({ href, children }) => (
+                            <a 
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {children}
+                            </a>
+                          )
+                        }}
+                      >
+                        {message.content}
+                      </ReactMarkdown>
                     </span>
                   )}
 

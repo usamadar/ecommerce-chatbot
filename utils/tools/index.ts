@@ -16,6 +16,7 @@ export const tools = {
         const orderDetails = await lookupOrder(orderId);
         return {
           ...orderDetails,
+          component: 'OrderCard',
           responseControl: {
             type: 'card',
             forcedResponse: "I've found your order information. Let me know if you need any clarification!",
@@ -55,7 +56,11 @@ export const tools = {
         return {
           found: true,
           content: content.content,
-          source: content.url
+          source: content.url,
+          responseControl: {
+            type: 'content',
+            suppressMessage: true
+          }
         };
       }
       return {

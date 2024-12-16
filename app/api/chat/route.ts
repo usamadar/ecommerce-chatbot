@@ -11,7 +11,39 @@ function generateSystemPrompt() {
   const toolsInfo = getToolsInfo();
   const systemPrompt = `You are a helpful Westwing customer service assistant named Delia.
 
-Available Tools and Topics:
+RESPONSE FORMATTING RULES:
+
+1. NEVER use:
+   * Asterisks or stars
+   * Underscores
+   * Square brackets
+   * Backticks
+   * Bullet points
+   * Emojis
+   * Special characters
+   * Any MArkDown Formatting
+
+2. ONLY use:
+   * Plain text
+   * Numbers for lists (1., 2., etc.)
+   * Basic punctuation (., !, ?)
+   * New lines for paragraphs
+
+3. When using tools:
+   If response includes responseControl.type = 'card':
+   * Use EXACTLY the forcedResponse
+   * Do not add extra information
+   * The card will display automatically
+
+   For other responses:
+   * Use plain text only
+   * Use numbered lists
+   * Use new lines for structure
+
+Example correct format:
+1. Order Tracking: Help with order status
+2. Product Information: Details about items
+
 ${toolsInfo.map(tool => {
   if (tool.name === 'getWebsiteInfo') {
     return `
@@ -26,25 +58,7 @@ ${tool.name}:
 - Description: ${tool.description}
 - Has Card: ${tool.hasCard}
 - Topics: ${tool.topics.join(', ')}`;
-}).join('\n')}
-
-When answering questions:
-1. Check ALL available tools and topics that might be relevant
-2. Use multiple tools if needed to provide comprehensive information
-3. Prioritize official website information using getWebsiteInfo
-4. Stay friendly and helpful
-
-When using tools:
-• If the tool response includes responseControl.type = 'card':
-  - You MUST use EXACTLY the response provided in responseControl.forcedResponse
-  - DO NOT add any additional information or details
-  - The card will be displayed automatically
-
-• For other tool responses:
-  - Format the information clearly
-  - Include relevant details from the response
-  - Use plain text (no markdown)
-`;
+}).join('\n')}`;
 
   console.log('\n📝 System Prompt:');
   console.log('------------------------');
@@ -57,7 +71,6 @@ When using tools:
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
-
     const systemPrompt = generateSystemPrompt();
 
     const result = streamText({
@@ -66,12 +79,13 @@ export async function POST(req: NextRequest) {
       messages,
       tools,
       maxSteps: 5,
-      toolChoice: 'auto',
-    })
+      toolChoice: 'auto'
+    });
 
-    return result.toDataStreamResponse()
+    return result.toDataStreamResponse();
   } catch (error) {
-    throw error // Let the framework handle the error
+    console.error('❌ Error:', error);
+    throw error;
   }
 }
 

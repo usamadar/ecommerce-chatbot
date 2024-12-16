@@ -55,43 +55,22 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'text-right' : 'text-left'
                   }`}
                 >
-                  <span
-                    className={`inline-block p-4 rounded-2xl max-w-[85%] ${
-                      message.role === 'user'
-                        ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
-                        : 'bg-gray-100 text-gray-800 rounded-bl-none shadow-sm'
-                    }`}
-                  >
-                    {message.content.split('\n').map((line, i) => {
-                      // Check if line contains a URL in markdown format: [text](url)
-                      const linkMatch = line.match(/\[(.*?)\]\((.*?)\)/);
-                      if (linkMatch) {
-                        const [fullMatch, text, url] = linkMatch;
-                        const beforeLink = line.split(fullMatch)[0];
-                        const afterLink = line.split(fullMatch)[1];
-                        return (
-                          <p key={i} className={`${line.startsWith('**') ? 'font-semibold my-1' : 'my-0.5'}`}>
-                            {beforeLink}
-                            <a 
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline"
-                            >
-                              {text}
-                            </a>
-                            {afterLink}
-                          </p>
-                        );
-                      }
-                      
-                      return (
-                        <p key={i} className={`${line.startsWith('**') ? 'font-semibold my-1' : 'my-0.5'}`}>
-                          {line.replace(/\*\*/g, '')}
-                        </p>
-                      );
-                    })}
-                  </span>
+                  {(message.role === 'user' || !message.toolInvocations?.some(t => 
+                    t.state === 'result' && (
+                      t.result?.component ||  // For card components
+                      t.result?.responseControl?.suppressMessage  // For website info
+                    )
+                  )) && (
+                    <span
+                      className={`inline-block p-4 rounded-2xl max-w-[85%] whitespace-pre-wrap ${
+                        message.role === 'user'
+                          ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
+                          : 'bg-gray-100 text-gray-800 rounded-bl-none shadow-sm'
+                      }`}
+                    >
+                      {message.content}
+                    </span>
+                  )}
 
                   {/* Tool invocations with improved spacing */}
                   <div className="mt-4 space-y-4">
@@ -99,23 +78,25 @@ export default function ChatInterface() {
                       const { toolName, toolCallId, state, result } = toolInvocation;
 
                       if (state === 'result') {
+                        const cardClasses = "mt-2 max-w-md"; // Base classes for all cards
+                        
                         if (toolName === 'lookupOrder' && !result.error) {
                           return (
-                            <div key={toolCallId} className="mt-2 max-w-md ml-auto">
+                            <div key={toolCallId} className={cardClasses}>
                               <OrderCard {...result} />
                             </div>
                           );
                         }
                         if (toolName === 'getProductInfo' && result?.component === 'ProductCard') {
                           return (
-                            <div key={toolCallId} className="mt-2 max-w-md">
+                            <div key={toolCallId} className={cardClasses}>
                               <ProductCard {...result} />
                             </div>
                           );
                         }
                         if (toolName === 'getReturnPolicy' && result?.component === 'ReturnPolicyCard') {
                           return (
-                            <div key={toolCallId} className="mt-2 max-w-md">
+                            <div key={toolCallId} className={cardClasses}>
                               <ReturnPolicyCard {...result} />
                             </div>
                           );

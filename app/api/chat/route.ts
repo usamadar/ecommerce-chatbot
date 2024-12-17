@@ -47,9 +47,9 @@ export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
     const systemPrompt = generateSystemPrompt();
-
+    console.log('System Prompt:', systemPrompt);
     const result = streamText({
-      model: openai('gpt-4o-mini'),
+      model: openai('gpt-4o'),
       system: systemPrompt,
       messages,
       tools,

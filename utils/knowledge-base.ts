@@ -1,4 +1,4 @@
-import { scrapeWebpage } from './scraper';
+import { scrapeUrl } from './scraper';
 
 interface PageContent {
   url: string;
@@ -72,9 +72,14 @@ class DynamicKnowledgeBase {
     console.log('✅ Found matching URL:', url);
 
     console.log('🔄 Fetching fresh content for:', url);
-    const content = await scrapeWebpage(url);
+    const content = await scrapeUrl(url);
+    //console.log('📝 Content preview:', content);
     if (content) {
-      return content;
+      return {
+        url,
+        content,
+        timestamp: new Date().toISOString()
+      };
     }
 
     return null;

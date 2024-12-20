@@ -17,6 +17,7 @@ export default function AdminPage() {
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         fetchUrls();
@@ -24,12 +25,18 @@ export default function AdminPage() {
 
     const fetchUrls = async () => {
         try {
+            setIsLoading(true);
             const response = await fetch('/api/urls');
+            if (!response.ok) {
+                throw new Error('Failed to fetch URLs');
+            }
             const data = await response.json();
             setUrls(data.urls);
         } catch (error) {
             setError('Failed to fetch URLs');
             console.error('Error fetching URLs:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -125,7 +132,12 @@ export default function AdminPage() {
             <div className="border rounded-lg">
                 <h2 className="text-xl font-semibold p-4 border-b">Saved URLs</h2>
                 <ScrollArea className="h-[400px] p-4">
-                    {urls.length === 0 ? (
+                    {isLoading ? (
+                        <div className="flex flex-col items-center justify-center h-32 space-y-3">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                            <p className="text-gray-500">Loading saved URLs...</p>
+                        </div>
+                    ) : urls.length === 0 ? (
                         <p className="text-gray-500">No URLs added yet</p>
                     ) : (
                         <div className="space-y-4">

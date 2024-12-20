@@ -16,7 +16,45 @@ const embeddings = new OpenAIEmbeddings({
 let urls: { id: string; url: string; description: string; createdAt: Date }[] = [];
 
 export async function GET() {
-    return NextResponse.json({ urls });
+    try {
+        const index = pinecone.index(process.env.PINECONE_INDEX!);
+        
+        // Step 1: Get all IDs with pagination
+        let allVectors = [];
+        let paginationToken = undefined;
+        
+        do {
+            const response = await index.listPaginated({
+                limit: 100,
+                paginationToken
+            });
+            
+            allVectors.push(...response.vectors);
+            paginationToken = response.pagination?.next;
+        } while (paginationToken);
+
+        // Step 2: Fetch metadata for each ID
+        const urlPromises = allVectors.map(vector => 
+            index.fetch([vector.id])
+        );
+        
+        const urlResponses = await Promise.all(urlPromises);
+        
+        const urls = urlResponses
+            .flatMap(res => Object.values(res.records))
+            .filter(record => record.metadata?.url && record.metadata?.description)
+            .map(record => ({
+                id: record.id,
+                url: record.metadata!.url as string,
+                description: record.metadata!.description as string,
+                createdAt: new Date(record.metadata!.timestamp as string)
+            }));
+
+        return NextResponse.json({ urls });
+    } catch (error) {
+        console.error('Error fetching URLs:', error);
+        return NextResponse.json({ error: 'Failed to fetch URLs' }, { status: 500 });
+    }
 }
 
 export async function POST(req: NextRequest) {
@@ -48,7 +86,8 @@ export async function POST(req: NextRequest) {
                 url,
                 description,
                 content: scrapedContent,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                isUrl: true
             }
         }]);
 

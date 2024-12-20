@@ -1,0 +1,168 @@
+Pine Code Documentation
+
+This page shows you how to use the list endpoint to list the IDs of records in an index namespace. You can list the IDs of all records in a namespace or just the records with a common ID prefix.
+
+Using list to get record IDs and not the associated data is a cheap and fast way to check upsets
+
+To list the IDs of all records in the namespace of a serverless index, pass only the namespace parameter:
+
+
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated();
+console.log(results);
+// {
+//   vectors: [
+//     { id: 'doc1#01' }, { id: 'doc1#02' }, { id: 'doc1#03' },
+//     { id: 'doc1#04' }, { id: 'doc1#05' },  { id: 'doc1#06' },
+//     { id: 'doc1#07' }, { id: 'doc1#08' }, { id: 'doc1#09' },
+//     ...
+//   ],
+//   pagination: {
+//     next: 'eyJza2lwX3Bhc3QiOiJwcmVUZXN0LS04MCIsInByZWZpeCI6InByZVRlc3QifQ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+// Fetch the next page of results
+await index.listPaginated({ prefix: 'doc1#', paginationToken: results.pagination.next});
+
+ID prefixes enable you to query segments of content. Use the list endpoint to list all of the records with the common prefix. For more details, see Use ID prefixes.
+
+​
+Paginate through results
+The list endpoint returns up to 100 IDs per page at a time by default. If the limit parameter is passed, list returns up to that number of IDs per page instead. For example, if limit=3, up to 3 IDs be returned per page. Whenever there are additional IDs to return, the response also includes a pagination_token for fetching the next page of IDs.
+
+When using the Node.js SDK, Java SDK, Go SDK, .NET SDK, or REST API, you must manually fetch each page of results. You can also manually paginate with the Python SDK using list_paginated().
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated({ prefix: 'doc1#', limit 3 });
+console.log(results);
+
+// Response:
+// {
+//   vectors: [
+//     { id: 'doc1#01' }, { id: 'doc1#02' }, { id: 'doc1#03' }
+//   ],
+//   pagination: {
+//     next: 'eyJza2lwX3Bhc3QiOiJwcmVUZXN0LSCIsInByZWZpeCI6InByZVRlc3QifQ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+Then, to get the next batch of IDs, use the returned pagination_token:
+
+await index.listPaginated({ prefix: 'doc1#', limit: 3, paginationToken: results.pagination.next});
+
+// Response:
+// {
+//   vectors: [
+//     { id: 'doc1#10' }, { id: 'doc1#11' }, { id: 'doc1#12' }
+//   ],
+//   pagination: {
+//     next: 'dfajlkjfdsoijeowjoDJFKLJldLIFf34KFNLDSndaklqoLQJORN45afdlkJ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+When there are no more IDs to return, the response does not includes a pagination_token:
+
+
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated({ prefix: 'doc1#' });
+console.log(results);
+
+// Response:
+// {
+//   vectors: [
+//     { id: 'doc1#19' }, { id: 'doc1#20' }, { id: 'doc1#21' }
+//   ],
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+To query by record ID, provide the unique record ID and the topK parameter.
+
+The following example sends a query vector with an id value and retrieves three matching vectors:
+
+import { Pinecone } from '@pinecone-database/pinecone'
+
+const pc = new Pinecone({ apiKey: 'YOUR_API_KEY' })
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
+const queryResponse = await index.namespace('example-namespace').query({
+    id: 'B',
+    topK: 3,
+    includeValues: true
+});
+
+Metadata filter expressions can be included with queries to limit the search to only vectors matching the filter expression.
+
+For optimal performance, when querying pod-based indexes with top_k over 1000, avoid returning vector data (include_values=True) or metadata (include_metadata=True).
+Use the filter parameter to specify the metadata filter expression. For example, to search for a movie in the “documentary” genre:
+
+import { Pinecone } from '@pinecone-database/pinecone'
+
+const pc = new Pinecone({ apiKey: "YOUR_API_KEY" })
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
+const queryResponse = await index.namespace('example-namespace').query({
+    vector: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+    topK: 1,
+    includeMetadata: true,
+    filter: {
+        "genre": {"$eq": "documentary"}
+    }
+});
+
+// Returns:
+// {'matches': [{'id': 'B',
+//               'metadata': {'genre': 'documentary'},
+//               'score': 0.0800000429,
+//               'values': []}],
+//  'namespace': 'example-namespace'}
+
+Additional filter examples
+Filter	Example	Description
+$eq	{"genre": {"$eq": "documentary"}}	Matches vectors with the genre “documentary”.
+$ne	{"genre": {"$ne": "drama"}}	Matches vectors with a genre other than “drama”.
+$gt	{"year": {"$gt": 2019}}	Matches vectors with a year greater than 2019.
+$gte	{"year": {"$gte": 2020}}	Matches vectors with a year greater than or equal to 2020.
+$lt	{"year": {"$lt": 2020}}	Matches vectors with a year less than 2020.
+$lte	{"year": {"$lte": 2020}}	Matches vectors with a year less than or equal to 2020.
+$in	{"genre": {"$in": ["comedy", "documentary"]}}	Matches vectors with the genre “comedy” or “documentary”.
+$nin	{"genre": {"$nin": ["comedy", "documentary"]}}	Matches vectors with a genre other than “comedy” or “documentary”.
+$exists	{"genre": {"$exists": true}}	Matches vectors with the “genre” field.
+​
+
+Combine filters
+The metadata filters can be combined by using $and and $or operators:
+
+Operator	Example	Description
+$and	{"$and": [{"genre": {"$eq": "drama"}}, {"year": {"$gte": 2020}}]}	Matches vectors with the genre “drama” and a year greater than or equal to 2020.
+$or	{"$or": [{"genre": {"$eq": "drama"}}, {"year": {"$gte": 2020}}]}	Matches vectors with the genre “drama” or a year greater than or equal to 2020.
+​
+

@@ -18,9 +18,8 @@ let urls: { id: string; url: string; description: string; createdAt: Date }[] = 
 export async function GET() {
     try {
         const index = pinecone.index(process.env.PINECONE_INDEX!);
-        
         // Step 1: Get all IDs with pagination
-        let allVectors = [];
+        const allVectors = [];
         let paginationToken = undefined;
         
         do {
@@ -29,17 +28,18 @@ export async function GET() {
                 paginationToken
             });
             
-            allVectors.push(...response.vectors);
+            if (response.vectors) {
+                allVectors.push(...response.vectors);
+            }
             paginationToken = response.pagination?.next;
         } while (paginationToken);
 
         // Step 2: Fetch metadata for each ID
         const urlPromises = allVectors.map(vector => 
-            index.fetch([vector.id])
+            index.fetch([vector.id!])
         );
         
         const urlResponses = await Promise.all(urlPromises);
-        
         const urls = urlResponses
             .flatMap(res => Object.values(res.records))
             .filter(record => record.metadata?.url && record.metadata?.description)
@@ -50,7 +50,10 @@ export async function GET() {
                 createdAt: new Date(record.metadata!.timestamp as string)
             }));
 
-        return NextResponse.json({ urls });
+        return NextResponse.json({ 
+            urls,
+            totalDocuments: allVectors.length 
+        });
     } catch (error) {
         console.error('Error fetching URLs:', error);
         return NextResponse.json({ error: 'Failed to fetch URLs' }, { status: 500 });

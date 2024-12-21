@@ -1,0 +1,161 @@
+In Retrieval Augmented Generation (RAG) use cases, it is best practice to chunk large documents into smaller segments, embed each chunk separately, and then store each embedded chunk as a distinct record in Pinecone. This page shows you how to model, store, and manage such records in serverless indexes.
+​
+
+Use ID prefixes
+ID prefixes enable you to query segments of content, which is especially useful for lists and mass deletion. Prefixes are commonly used to represent the following:
+		Hierarchical relationships: When you have multiple records representing chunks of a single document, use a common ID prefix to reference the document. This is the main use of ID prefixes for RAG.
+		Versioning: Assign a multi-level ID prefix to denote the version of the content.
+		Content typing: For multi-modal search, assign an ID prefix to identify different kind of objects (e.g., text, images, videos) in the database.
+		Source identification: Assign an ID prefix to denote the source of the content. For example, if you want to disconnect a given user’s account that was a data source, you can easily find and delete all of the records associated with the user.
+
+Use ID prefixes to reference parent documents
+When you have multiple records representing chunks of a single document, use a common ID prefix to reference the document.
+
+You can use any prefix pattern you like, but make sure you use a consistent prefix pattern for all child records of a document. For example, the following are all valid prefixes for the first chunk of doc1:
+
+doc1#chunk1
+doc1_chunk1
+doc1___chunk1
+doc1:chunk1
+doc1chunk1
+Prefixes can also be multi-level. For example, doc1#v1#chunk1 and doc1#v2#chunk1 can represent different versions of the first chunk of doc1.
+
+import { Pinecone } from '@pinecone-database/pinecone'
+
+const pc = new Pinecone({
+  apiKey: 'YOUR_API_KEY'
+});
+
+await pc.createIndex({
+  name: 'example-index',
+  dimension: 1536,
+  metric: 'cosine',
+  spec: {
+    serverless: {
+      cloud: 'aws',
+      region: 'us-east-1'
+    }
+  }
+});
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST")
+
+await index.namespace("example-namespace").upsert([
+  {
+    "id": "doc1#chunk1", 
+    "values": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  },
+  {
+    "id": "doc1#chunk2", 
+    "values": [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+  },
+  {
+    "id": "doc1#chunk3", 
+    "values": [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+  },
+  {
+    "id": "doc1#chunk4", 
+    "values": [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]
+  }
+]);
+
+
+List all record IDs for a parent document
+When all records related to a document use a common ID prefix, you can use the list operation with the namespace and prefix parameters to fetch the IDs of the records.
+
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated({ prefix: 'doc1#' });
+console.log(results);
+
+// {
+//   vectors: [
+//     { id: 'doc1#01' }, { id: 'doc1#02' }, { id: 'doc1#03' },
+//     { id: 'doc1#04' }, { id: 'doc1#05' },  { id: 'doc1#06' },
+//     { id: 'doc1#07' }, { id: 'doc1#08' }, { id: 'doc1#09' },
+//     ...
+//   ],
+//   pagination: {
+//     next: 'eyJza2lwX3Bhc3QiOiJwcmVUZXN0LS04MCIsInByZWZpeCI6InByZVRlc3QifQ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+// Fetch the next page of results
+await index.listPaginated({ prefix: 'doc1#', paginationToken: results.pagination.next});
+
+When there are additional IDs to return, the response includes a pagination_token that you can use to get the next batch of IDs. For more details, see Paginate through list results
+
+With the record IDs, you can then use the fetch endpoint to fetch the content of the records.
+
+​
+
+Delete all records for a parent document
+To delete all records representing chunks of a single document, first list the record IDs based on their common ID prefix, and then delete the records by ID:
+
+Work with multi-level ID prefixes
+The examples above are based on a simple ID prefix (doc1#), but it’s also possible to work with more complex, multi-level prefixes.
+
+For example, let’s say you use the prefix pattern doc#v#chunk to differentiate between different versions of a document. If you wanted to delete all records for one version of a document, first list the record IDs based on the relevant doc#v# prefix and then delete the records by ID:
+
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated({ prefix: 'doc1#v1' });
+console.log(results);
+
+// {
+//   vectors: [
+//     { id: 'doc1#v1#01' }, { id: 'doc1#v1#02' }, { id: 'doc1#v1#03' }
+//   ],
+//   pagination: {
+//     next: 'eyJza2lwX3Bhc3QiOiJwcmVUZXN0LS04MCIsInByZWZpeCI6InByZVRlc3QifQ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+// Then, delete the records by ID:
+const vectorIds = results.vectors.map((vector) => vector.id);
+await index.deleteMany(vectorIds);
+
+However, if you wanted to delete all records across all versions of a document, you would list the record IDs based on the doc1# part of the prefix that is common to all versions and then delete the records by ID:
+
+import { Pinecone } from '@pinecone-database/pinecone';
+const pc = new Pinecone();
+
+// To get the unique host for an index, 
+// see https://docs.pinecone.io/guides/data/target-an-index
+const index = pc.index("INDEX_NAME", "INDEX_HOST").namespace("example-namespace");
+
+const results = await index.listPaginated({ prefix: 'doc1#' });
+console.log(results);
+
+// {
+//   vectors: [
+//     { id: 'doc1#v1#01' }, { id: 'doc1#v1#02' }, { id: 'doc1#v1#03' },
+//     { id: 'doc1#v2#01' }, { id: 'doc1#v2#02' }, { id: 'doc1#v2#03' }
+//   ],
+//   pagination: {
+//     next: 'eyJza2lwX3Bhc3QiOiJwcmVUZXN0LS04MCIsInByZWZpeCI6InByZVRlc3QifQ=='
+//   },
+//   namespace: 'example-namespace',
+//   usage: { readUnits: 1 }
+// }
+
+// Then, delete the records by ID:
+const vectorIds = results.vectors.map((vector) => vector.id);
+await index.deleteMany(vectorIds);
+

@@ -12,12 +12,12 @@ const embeddings = new OpenAIEmbeddings({
     openAIApiKey: process.env.OPENAI_API_KEY
 });
 
-// In-memory storage for URLs (replace with database in production)
 let urls: { id: string; url: string; description: string; createdAt: Date }[] = [];
 
 export async function GET() {
     try {
         const index = pinecone.index(process.env.PINECONE_INDEX!);
+        
         // Step 1: Get all IDs with pagination
         const allVectors = [];
         let paginationToken = undefined;
@@ -35,28 +35,25 @@ export async function GET() {
         } while (paginationToken);
 
         // Step 2: Fetch metadata for each ID
-        const urlPromises = allVectors.map(vector => 
-            index.fetch([vector.id!])
-        );
+        const vectorPromises = allVectors.map(vector => {
+            console.log('Fetching vector ID:', vector.id);
+            return index.fetch([vector.id!]); // Add non-null assertion since we know id exists
+        });
         
-        const urlResponses = await Promise.all(urlPromises);
-        const urls = urlResponses
+        const vectorResponses = await Promise.all(vectorPromises);
+        const records = vectorResponses
             .flatMap(res => Object.values(res.records))
-            .filter(record => record.metadata?.url && record.metadata?.description)
-            .map(record => ({
-                id: record.id,
-                url: record.metadata!.url as string,
-                description: record.metadata!.description as string,
-                createdAt: new Date(record.metadata!.timestamp as string)
-            }));
+            .filter(record => record.metadata); // Filter out records without metadata
 
         return NextResponse.json({ 
-            urls,
-            totalDocuments: allVectors.length 
+            vectors: records.map(record => ({
+                id: record.id,
+                metadata: record.metadata
+            }))
         });
     } catch (error) {
-        console.error('Error fetching URLs:', error);
-        return NextResponse.json({ error: 'Failed to fetch URLs' }, { status: 500 });
+        console.error('Error fetching items:', error);
+        return NextResponse.json({ error: 'Failed to fetch items' }, { status: 500 });
     }
 }
 

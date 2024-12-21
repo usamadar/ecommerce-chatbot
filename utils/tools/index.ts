@@ -28,12 +28,21 @@ export const tools = {
           component: 'OrderCard',
           responseControl: {
             type: 'card',
-            forcedResponse: "I've found your order information. Let me know if you need any clarification!",
+            forcedResponse: {
+              en: "I've found your order information. Let me know if you need any clarification!",
+              de: "Ich habe Ihre Bestellinformationen gefunden. Lassen Sie mich wissen, wenn Sie weitere Klärung benötigen!"
+            },
             suppressDetails: true
           }
         };
       } catch (error) {
-        return { error: true, message: error.message };
+        return { 
+          error: true, 
+          message: {
+            en: (error as Error).message ?? 'An unknown error occurred',
+            de: (error as Error).message ?? 'Ein unbekannter Fehler ist aufgetreten'
+          }
+        };
       }
     },
   },
@@ -62,7 +71,7 @@ export const tools = {
         console.log('🔎 Performing vector similarity search...');
         const searchResults = await index.query({
           vector: queryEmbedding,
-          topK: 10,  // Increased from 1 to 10
+          topK: 20,
           includeMetadata: true
         });
 
@@ -71,14 +80,14 @@ export const tools = {
           .filter(match => match.score && match.score > 0.7)
           .sort((a, b) => (b.score || 0) - (a.score || 0));
 
-        console.log('📊 Search results:', {
-          totalMatches: searchResults.matches.length,
-          relevantMatches: relevantMatches.length,
-          scores: relevantMatches.map(m => m.score),
-          urls: relevantMatches.map(m => m.metadata?.url)
-        });
-        
         if (relevantMatches.length > 0) {
+          // Log most relevant content
+          console.log('\n📝 Most relevant content:');
+          relevantMatches.slice(0, 3).forEach((match, i) => {
+            console.log(`\n--- Match ${i + 1} (score: ${match.score}) ---`);
+            console.log(match.metadata?.content?.slice(0, 200) + '...');
+          });
+
           // Combine content from all relevant matches
           const combinedContent = relevantMatches
             .map(match => match.metadata?.content as string)
@@ -93,10 +102,11 @@ export const tools = {
           return {
             found: true,
             content: combinedContent,
-            sources: sources,  // Changed from single source to array of sources
+            sources: sources,
             responseControl: {
               type: 'content',
-              suppressMessage: true
+              suppressMessage: true,
+              language: 'auto'
             }
           };
         }
@@ -104,13 +114,19 @@ export const tools = {
         console.log('❌ No relevant content found (scores too low or no matches)');
         return {
           found: false,
-          message: "I don't have specific information about that topic."
+          message: {
+            en: "I don't have specific information about that topic.",
+            de: "Ich habe keine spezifischen Informationen zu diesem Thema."
+          }
         };
       } catch (error) {
         console.error('💥 Error in getWebsiteInfo:', error);
         return {
           found: false,
-          message: "Sorry, I encountered an error while searching for information."
+          message: {
+            en: "Sorry, I encountered an error while searching for information.",
+            de: "Entschuldigung, bei der Suche nach Informationen ist ein Fehler aufgetreten."
+          }
         };
       }
     },

@@ -34,13 +34,11 @@ interface Vector {
 export default function AdminPage() {
     const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
     const [newUrl, setNewUrl] = useState('');
-    const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [documentCount, setDocumentCount] = useState<number>(0);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [urlDescription, setUrlDescription] = useState('');
     const [documentDescription, setDocumentDescription] = useState('');
 

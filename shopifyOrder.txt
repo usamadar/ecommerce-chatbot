@@ -1,0 +1,255 @@
+query GetOrderByNumberAndEmail {
+  orders(query: "name:#1001 AND email:test@example.com", first: 1) {
+    edges {
+      node {
+        id
+        name
+        email
+        createdAt
+        totalPriceSet {
+          shopMoney {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+}
+
+get a list of fullfilments for an order
+
+query FulfillmentList($orderId: ID!) {
+  order(id: $orderId) {
+    fulfillments(first: 10) {
+      fulfillmentLineItems(first: 10) {
+        edges {
+          node {
+            id
+            lineItem {
+              title
+              variant {
+                id
+              }
+            }
+            quantity
+            originalTotalSet {
+              shopMoney {
+                amount
+                currencyCode
+              }
+            }
+          }
+        }
+      }
+      status
+      estimatedDeliveryAt
+      location {
+        id
+        legacyResourceId
+      }
+      service {
+        handle
+      }
+      trackingInfo(first: 10) {
+        company
+        number
+        url
+      }
+      originAddress {
+        address1
+        address2
+        city
+        countryCode
+        provinceCode
+        zip
+      }
+    }
+  }
+}
+
+To get list of fullfilment orders for an order
+
+query FulfillmentOrderList($orderId: ID!) {
+  order(id: $orderId) {
+    fulfillmentOrders(first: 250) {
+      nodes {
+        id
+        createdAt
+        updatedAt
+        requestStatus
+        status
+        fulfillAt
+        destination {
+          id
+          address1
+          address2
+          city
+          company
+          countryCode
+          email
+          firstName
+          lastName
+          phone
+          province
+          zip
+        }
+        lineItems(first: 250) {
+          nodes {
+            id
+            totalQuantity
+            inventoryItemId
+            remainingQuantity
+            variant {
+              id
+            }
+          }
+        }
+        internationalDuties {
+          incoterm
+        }
+        fulfillmentHolds {
+          reason
+          reasonNotes
+        }
+        fulfillBy
+        deliveryMethod {
+          id
+          methodType
+          minDeliveryDateTime
+          maxDeliveryDateTime
+          additionalInformation {
+            instructions
+            phone
+          }
+          serviceCode
+          sourceReference
+          presentedName
+          brandedPromise {
+            handle
+            name
+          }
+        }
+        assignedLocation {
+          address1
+          address2
+          city
+          countryCode
+          location {
+            id
+          }
+          name
+          phone
+          province
+          zip
+        }
+        merchantRequests(first: 250) {
+          nodes {
+            message
+            requestOptions
+            kind
+          }
+        }
+      }
+    }
+  }
+}
+
+To list the fields of the `Order` object as per the [Shopify documentation](https://shopify.dev/docs/api/admin-graphql/2024-10/objects/Order), here is the precise list directly from the reference:
+
+- **app**: The app associated with the order.
+- **billingAddress**: The billing address of the customer.
+- **browserIp**: The IP address used by the customer when placing the order.
+- **buyerAcceptsMarketing**: Indicates whether the buyer consented to receive marketing emails.
+- **cancelReason**: The reason why the order was canceled.
+- **cancelledAt**: The date and time when the order was canceled.
+- **cartDiscountAmountSet**: The cart-level discounts applied to the order.
+- **cartLevelDiscountApplications**: Discount applications applied at the cart level.
+- **checkoutToken**: The checkout token associated with the order.
+- **closed**: Indicates whether the order is closed.
+- **closedAt**: The date and time when the order was closed.
+- **createdAt**: The date and time when the order was created.
+- **currencyCode**: The three-letter currency code.
+- **currentSubtotalPriceSet**: The current subtotal of the order, in shop and presentment currencies.
+- **currentTotalDutiesSet**: The current total duties of the order, in shop and presentment currencies.
+- **currentTotalPriceSet**: The current total price of the order, in shop and presentment currencies.
+- **currentTotalTaxSet**: The current total tax of the order, in shop and presentment currencies.
+- **customer**: The customer associated with the order.
+- **customerJourneySummary**: The summary of the customer journey leading to the order.
+- **customerLocale**: The locale of the customer.
+- **discountApplications**: The discount applications applied to the order.
+- **discountCode**: The discount code applied to the order.
+- **displayFulfillmentStatus**: The display-ready fulfillment status of the order.
+- **edited**: Indicates whether the order has been edited.
+- **email**: The email address of the customer.
+- **financialStatus**: The financial status of the order.
+- **fulfillmentStatus**: The fulfillment status of the order.
+- **id**: The unique identifier of the order.
+- **landingSite**: The landing site of the customer before placing the order.
+- **lineItems**: The line items in the order.
+- **locationId**: The location associated with the order.
+- **merchantEditable**: Indicates whether the order is editable by the merchant.
+- **name**: The name of the order.
+- **note**: The note attached to the order.
+- **orderNumber**: The numeric identifier for the order.
+- **originalTotalDutiesSet**: The original total duties of the order, in shop and presentment currencies.
+- **originalTotalPriceSet**: The original total price of the order, in shop and presentment currencies.
+- **phone**: The phone number of the customer.
+- **processedAt**: The date and time when the order was processed.
+- **referringSite**: The referring site of the customer.
+- **refundDiscrepancies**: Any discrepancies in refunds for the order.
+- **refunds**: The refunds associated with the order.
+- **shippingAddress**: The shipping address of the customer.
+- **shippingDiscountAllocations**: The shipping discount allocations for the order.
+- **shippingLine**: The shipping line for the order.
+- **subtotalPriceSet**: The subtotal of the order, in shop and presentment currencies.
+- **tags**: The tags associated with the order.
+- **taxLines**: The tax lines applied to the order.
+- **taxesIncluded**: Indicates whether taxes are included in the order price.
+- **test**: Indicates whether the order is a test order.
+- **totalCapturedSet**: The total captured for the order, in shop and presentment currencies.
+- **totalOutstandingSet**: The total outstanding for the order, in shop and presentment currencies.
+- **totalPriceSet**: The total price of the order, in shop and presentment currencies.
+- **totalRefundedSet**: The total refunded for the order, in shop and presentment currencies.
+- **totalShippingPriceSet**: The total shipping price of the order, in shop and presentment currencies.
+- **totalTaxSet**: The total tax of the order, in shop and presentment currencies.
+- **updatedAt**: The date and time when the order was last updated.
+
+This list aligns precisely with the structure in the Shopify Admin GraphQL API documentation. Let me know if you need detailed explanations for any of these fields!
+
+displayFulfillmentStatus is an enum that can be one of the following values:
+OrderDisplayFulfillmentStatus!
+non-null
+The fulfillment status for the order that can be shown to the merchant. This field does not capture all the details of an order's fulfillment state. It should only be used for display summary purposes. For a more granular view of the fulfillment status, refer to the FulfillmentOrder object.
+
+
+Hide enum values
+FULFILLED
+Displayed as Fulfilled. All the items in the order have been fulfilled.
+
+IN_PROGRESS
+Displayed as In progress. Some of the items in the order have been fulfilled, or a request for fulfillment has been sent to the fulfillment service.
+
+ON_HOLD
+Displayed as On hold. All of the unfulfilled items in this order are on hold.
+
+OPEN
+Displayed as Open. None of the items in the order have been fulfilled. Replaced by "UNFULFILLED" status.
+
+PARTIALLY_FULFILLED
+Displayed as Partially fulfilled. Some of the items in the order have been fulfilled.
+
+PENDING_FULFILLMENT
+Displayed as Pending fulfillment. A request for fulfillment of some items awaits a response from the fulfillment service. Replaced by the "IN_PROGRESS" status.
+
+REQUEST_DECLINED
+Displayed as Request declined. Some of the items in the order have been rejected for fulfillment by the fulfillment service.
+
+RESTOCKED
+Displayed as Restocked. All the items in the order have been restocked. Replaced by the "UNFULFILLED" status.
+
+SCHEDULED
+Displayed as Scheduled. All of the unfulfilled items in this order are scheduled for fulfillment at later time.
+
+UNFULFILLED
+Displayed as Unfulfilled. None of the items in the order have been fulfilled.

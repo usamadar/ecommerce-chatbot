@@ -36,7 +36,7 @@ export async function GET() {
 
         // Step 2: Fetch metadata for each ID
         const vectorPromises = allVectors.map(vector => {
-            console.log('Fetching vector ID:', vector.id);
+           // console.log('Fetching vector ID:', vector.id);
             return index.fetch([vector.id!]); // Add non-null assertion since we know id exists
         });
         
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     try {
         const { id } = await req.json();
-        
+        console.log('Deleting document with ID:', id);
         // Delete from Pinecone
         const index = pinecone.index(process.env.PINECONE_INDEX!);
         await index.deleteOne(id);

@@ -18,11 +18,12 @@ export const tools = {
     hasCard: true,
     topics: ['order tracking', 'order status', 'delivery tracking'],
     parameters: z.object({
-      orderId: z.string().describe('The unique order ID'),
+      orderId: z.string().describe('The order number'),
+      email: z.string().email().describe('The email address used for the order')
     }),
-    execute: async ({ orderId }: { orderId: string }) => {
+    execute: async ({ orderId, email }: { orderId: string; email: string }) => {
       try {
-        const orderDetails = await lookupOrder(orderId);
+        const orderDetails = await lookupOrder(orderId, email);
         return {
           ...orderDetails,
           component: 'OrderCard',
@@ -50,7 +51,12 @@ export const tools = {
   getWebsiteInfo: {
     description: 'Get information from Westwing website pages',
     hasCard: false,
-    topics: ['website content', 'product information', 'company policies', 'help articles'],
+    topics: [
+      'website content',
+      'product information', 
+      'company policies',
+      'help articles'
+    ],
     parameters: z.object({
       topic: z.string().describe('The topic to look up information about from the website'),
     }),
@@ -158,6 +164,7 @@ export const tools = {
   getReturnPolicy: {
     description: 'Get return policy information',
     hasCard: true,
+    topics: ['returns', 'refunds', 'shipping returns', 'return policy'],
     parameters: z.object({}),
     execute: async () => {
       return {
@@ -178,6 +185,6 @@ export function getToolsInfo() {
     name,
     description: tool.description,
     hasCard: tool.hasCard,
-    topics: 'topics' in tool ? tool.topics : []
+    topics: tool.topics
   }));
 } 

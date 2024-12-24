@@ -32,21 +32,12 @@ If response includes responseControl.type = 'card':
 - Do not add extra information
 - The card will display automatically
 
-${toolsInfo.map(tool => {
-  if (tool.name === 'getWebsiteInfo') {
-    return `
+${toolsInfo.map(tool => `
 ${tool.name}:
 - Description: ${tool.description}
 - Has Card: ${tool.hasCard}
-- Available Information:
-${tool.topics.map(t => `  • ${t.name}: ${t.description}`).join('\n')}`;
-  }
-  return `
-${tool.name}:
-- Description: ${tool.description}
-- Has Card: ${tool.hasCard}
-- Topics: ${tool.topics.join(', ')}`;
-}).join('\n')}`;
+- Topics: ${tool.topics.join(', ')}`
+).join('\n')}`;
 
   return systemPrompt;
 }

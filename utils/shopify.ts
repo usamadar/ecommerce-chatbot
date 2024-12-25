@@ -1,44 +1,60 @@
+// This module provides functionality to look up orders in the Shopify platform 
+// using the order number and email address. It defines the structure of the 
+// order response and includes an asynchronous function to fetch order details 
+// from the Shopify API. The function handles errors and returns a promise 
+// that resolves to an OrderResponse object containing the order's details.
 import axios from 'axios';
 
+/**
+ * Represents the response structure for an order lookup.
+ */
 interface OrderResponse {
-  name: string;
-  email: string;
-  displayFulfillmentStatus: string;
-  createdAt: string;
+  name: string; // The name associated with the order
+  email: string; // The email address used for the order
+  displayFulfillmentStatus: string; // The current fulfillment status of the order
+  createdAt: string; // The date and time when the order was created
   totalPrice: {
-    amount: string;
-    currencyCode: string;
+    amount: string; // The total amount of the order
+    currencyCode: string; // The currency code for the total price
   };
   shippingAddress?: {
-    address1: string;
-    city: string;
-    country: string;
-    zip: string;
+    address1: string; // The first line of the shipping address
+    city: string; // The city for the shipping address
+    country: string; // The country for the shipping address
+    zip: string; // The postal code for the shipping address
   };
   lineItems: Array<{
-    title: string;
-    quantity: number;
+    title: string; // The title of the line item
+    quantity: number; // The quantity of the line item
     originalPrice: {
-      amount: string;
-      currencyCode: string;
+      amount: string; // The original price of the line item
+      currencyCode: string; // The currency code for the original price
     };
     image?: {
-      url: string;
-      altText: string;
+      url: string; // The URL of the line item's image
+      altText: string; // The alt text for the line item's image
     };
   }>;
   fulfillments: Array<{
     trackingInfo: {
-      number: string;
-      url: string;
+      number: string; // The tracking number for the fulfillment
+      url: string; // The URL for tracking the fulfillment
     };
-    deliveredAt: string | null;
-    estimatedDeliveryAt: string | null;
+    deliveredAt: string | null; // The date and time when the order was delivered
+    estimatedDeliveryAt: string | null; // The estimated delivery date and time
   }>;
-  error?: boolean;
-  message?: string;
+  error?: boolean; // Indicates if there was an error in the response
+  message?: string; // A message providing additional information about the error
 }
 
+/**
+ * Looks up an order by its number and email address.
+ * 
+ * @param orderNumber - The order number to look up.
+ * @param email - The email address associated with the order.
+ * @returns A promise that resolves to an OrderResponse object containing order details.
+ * @throws An error if the order cannot be found or if there is an issue with the API request.
+ */
 export async function lookupOrder(orderNumber: string, email: string): Promise<OrderResponse> {
   console.log('🔍 Looking up order:', { orderNumber, email });
 

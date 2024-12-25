@@ -1,3 +1,35 @@
+/**
+ * OrderCard Component
+ * 
+ * This component displays the details of a customer's order, including
+ * the order name, email, fulfillment status, creation date, total price,
+ * shipping address, tracking information, and a list of items in the order.
+ * 
+ * Props:
+ * - name: The name or identifier of the order (e.g., order number).
+ * - email: The email address associated with the order.
+ * - displayFulfillmentStatus: The current fulfillment status of the order.
+ * - createdAt: The date and time when the order was created.
+ * - totalPrice: An object containing the total amount and currency code.
+ * - shippingAddress: An optional object containing the shipping address details.
+ * - lineItems: An array of items included in the order, each with a title,
+ *   quantity, original price, and optional image.
+ * - fulfillments: An array of fulfillment details, including tracking information.
+ * - className: An optional string for additional CSS classes to apply to the component.
+ * 
+ * Usage:
+ * <OrderCard 
+ *   name="#1234"
+ *   email="customer@example.com"
+ *   displayFulfillmentStatus="FULFILLED"
+ *   createdAt="2023-10-01T12:00:00Z"
+ *   totalPrice={{ amount: "100.00", currencyCode: "USD" }}
+ *   shippingAddress={{ address1: "123 Main St", city: "Anytown", country: "USA", zip: "12345" }}
+ *   lineItems={[{ title: "Product 1", quantity: 1, originalPrice: { amount: "50.00", currencyCode: "USD" }, image: { url: "image_url", altText: "Product 1" } }]}
+ *   fulfillments={[{ trackingInfo: { number: "TRACK123", url: "tracking_url" }, deliveredAt: null, estimatedDeliveryAt: "2023-10-05T12:00:00Z" }]}
+ * />
+ */
+
 import { cn } from "@/lib/utils"
 import Image from 'next/image';
 

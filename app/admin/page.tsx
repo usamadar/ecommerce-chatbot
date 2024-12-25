@@ -1,3 +1,27 @@
+/**
+ * AdminPage Component
+ * 
+ * This component serves as the administrative interface for managing URLs and documents.
+ * It allows users to add, delete, and upload content, while displaying a list of saved items.
+ * 
+ * Functionality:
+ * - Fetches and displays saved URLs and documents from the server.
+ * - Provides forms for adding new URLs and uploading documents.
+ * - Handles file selection with validation for supported types and size limits.
+ * - Allows users to delete saved URLs and refresh the content list.
+ * 
+ * State Management:
+ * - `savedItems`: Array of saved items fetched from the server.
+ * - `newUrl`: State for the new URL input field.
+ * - `loading`: Boolean state to indicate loading status for submissions.
+ * - `error`: State for handling error messages.
+ * - `isLoading`: Boolean state to indicate loading status for fetching items.
+ * - `documentCount`: Number of documents currently saved.
+ * - `selectedFile`: State for the currently selected file for upload.
+ * - `urlDescription`: State for the description of the new URL.
+ * - `documentDescription`: State for the description of the document being uploaded.
+ */
+
 'use client';
 
 import { useState, useEffect } from 'react';

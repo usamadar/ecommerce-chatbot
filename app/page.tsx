@@ -1,3 +1,21 @@
+/**
+ * ChatInterface Component
+ * 
+ * This component serves as the main interface for the Westwing customer support chat.
+ * It allows users to interact with a virtual assistant named Delia, who can help with
+ * order tracking, product inquiries, and other customer service-related questions.
+ * 
+ * Functionality:
+ * - Displays a chat interface with messages exchanged between the user and the assistant.
+ * - Supports tool invocations to fetch and display order details, product information,
+ *   and return policies using respective card components.
+ * - Includes an input field for users to type their messages and submit them to the assistant.
+ * - Automatically scrolls to the bottom of the chat when new messages are added.
+ * 
+ * Usage:
+ * <ChatInterface />
+ */
+
 'use client'
 
 import { useChat } from 'ai/react'

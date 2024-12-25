@@ -1,3 +1,9 @@
+/**
+ * This module handles URL management functionality for the application.
+ * It allows users to add, retrieve, and delete URLs along with their descriptions.
+ * The URLs are stored in a Pinecone database, and embeddings are generated for the content scraped from the URLs.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { scrapeUrl } from '@/utils/scraper';
@@ -8,12 +14,20 @@ const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!
 });
 
+// Initialize OpenAI embeddings client
 const embeddings = new OpenAIEmbeddings({
     openAIApiKey: process.env.OPENAI_API_KEY
 });
 
+// Local storage for URLs
 let urls: { id: string; url: string; description: string; createdAt: Date }[] = [];
 
+/**
+ * Handles GET requests to retrieve all stored URLs with their metadata.
+ * It fetches all IDs from the Pinecone index and retrieves their corresponding metadata.
+ * 
+ * @returns {NextResponse} - A JSON response containing an array of URLs and their metadata.
+ */
 export async function GET() {
     try {
         const index = pinecone.index(process.env.PINECONE_INDEX!);
@@ -36,7 +50,6 @@ export async function GET() {
 
         // Step 2: Fetch metadata for each ID
         const vectorPromises = allVectors.map(vector => {
-           // console.log('Fetching vector ID:', vector.id);
             return index.fetch([vector.id!]); // Add non-null assertion since we know id exists
         });
         
@@ -57,6 +70,14 @@ export async function GET() {
     }
 }
 
+/**
+ * Handles POST requests to add a new URL along with its description.
+ * It scrapes the content from the provided URL, generates an embedding for it,
+ * and stores the URL and its metadata in the Pinecone index.
+ * 
+ * @param {NextRequest} req - The incoming request object containing the URL and description.
+ * @returns {NextResponse} - A JSON response containing the newly added URL object.
+ */
 export async function POST(req: NextRequest) {
     try {
         const { url, description } = await req.json();
@@ -111,6 +132,13 @@ export async function POST(req: NextRequest) {
     }
 }
 
+/**
+ * Handles DELETE requests to remove a URL by its ID.
+ * It deletes the corresponding entry from the Pinecone index and local storage.
+ * 
+ * @param {NextRequest} req - The incoming request object containing the ID of the URL to delete.
+ * @returns {NextResponse} - A JSON response indicating the success of the deletion.
+ */
 export async function DELETE(req: NextRequest) {
     try {
         const { id } = await req.json();

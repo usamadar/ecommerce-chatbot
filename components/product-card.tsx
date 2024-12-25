@@ -1,5 +1,41 @@
 import Image from 'next/image';
 
+/**
+ * ProductCard Component
+ * 
+ * This component displays detailed product information in a card format,
+ * including the product image, title, price, description, specifications,
+ * availability status, and delivery information.
+ * 
+ * Props:
+ * - id: Unique identifier for the product.
+ * - title: The name of the product.
+ * - price: The product's price as a formatted string.
+ * - image: URL of the product image.
+ * - description: Detailed description of the product.
+ * - specifications: Object containing product details:
+ *   - dimensions: Product dimensions as a string
+ *   - material: Material information
+ *   - colors: Array of available colors
+ * - availability: Current stock status (e.g., "In Stock")
+ * - deliveryTime: Estimated delivery time information
+ * 
+ * Usage:
+ * <ProductCard
+ *   id="prod_123"
+ *   title="Modern Chair"
+ *   price="$199.99"
+ *   image="/images/chair.jpg"
+ *   description="Comfortable modern chair with ergonomic design"
+ *   specifications={{
+ *     dimensions: "24" × 24" × 36"",
+ *     material: "Oak Wood",
+ *     colors: ["Black", "White", "Natural"]
+ *   }}
+ *   availability="In Stock"
+ *   deliveryTime="2-3 business days"
+ * />
+ */
 interface ProductCardProps {
   id: string;
   title: string;
@@ -85,4 +121,4 @@ export function ProductCard(props: ProductCardProps) {
       </div>
     </div>
   );
-} 
+}

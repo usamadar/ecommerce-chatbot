@@ -1,3 +1,31 @@
+/**
+ * ReturnPolicyCard Component
+ * 
+ * This component displays a store's return policy information in a card format,
+ * including the main policy statement, conditions for returns, and the step-by-step
+ * return process.
+ * 
+ * Props:
+ * - policy: The main return policy statement (e.g., "30-day money-back guarantee").
+ * - conditions: Array of strings describing the conditions under which returns are accepted.
+ * - process: A string containing the step-by-step return process (supports line breaks with \n).
+ * 
+ * Usage:
+ * <ReturnPolicyCard
+ *   policy="30-day money-back guarantee"
+ *   conditions={[
+ *     "Item must be unused and in original packaging",
+ *     "Receipt or proof of purchase required",
+ *     "Return shipping paid by customer"
+ *   ]}
+ *   process={
+ *     "1. Contact customer service\n" +
+ *     "2. Get return authorization\n" +
+ *     "3. Ship item back\n" +
+ *     "4. Refund processed within 5 business days"
+ *   }
+ * />
+ */
 interface ReturnPolicyCardProps {
   policy: string;
   conditions: string[];
@@ -45,4 +73,4 @@ export function ReturnPolicyCard({ policy, conditions, process }: ReturnPolicyCa
       </div>
     </div>
   );
-} 
+}

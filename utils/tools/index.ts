@@ -47,7 +47,10 @@ const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!
 });
 
+import { handoffToAgent } from './zendesk';
+
 export const tools = {
+  handoffToAgent,
   lookupOrder: {
     description: 'Fetch order details from Westwing',
     hasCard: true,
@@ -222,4 +225,4 @@ export function getToolsInfo() {
     hasCard: tool.hasCard,
     topics: tool.topics
   }));
-} 
+}

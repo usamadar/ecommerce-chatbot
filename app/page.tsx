@@ -1,17 +1,17 @@
 /**
  * ChatInterface Component
- * 
+ *
  * This component serves as the main interface for the Westwing customer support chat.
  * It allows users to interact with a virtual assistant named Delia, who can help with
  * order tracking, product inquiries, and other customer service-related questions.
- * 
+ *
  * Functionality:
  * - Displays a chat interface with messages exchanged between the user and the assistant.
  * - Supports tool invocations to fetch and display order details, product information,
  *   and return policies using respective card components.
  * - Includes an input field for users to type their messages and submit them to the assistant.
  * - Automatically scrolls to the bottom of the chat when new messages are added.
- * 
+ *
  * Usage:
  * <ChatInterface />
  */
@@ -25,7 +25,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { OrderCard } from '@/components/order-card'
 import { ProductCard } from '@/components/product-card'
 import { ReturnPolicyCard } from '@/components/return-policy-card'
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown'
 
 export default function ChatInterface() {
@@ -72,7 +72,7 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'text-right' : 'text-left'
                   }`}
                 >
-                  {(message.role === 'user' || !message.toolInvocations?.some(t => 
+                  {(message.role === 'user' || !message.toolInvocations?.some(t =>
                     t.state === 'result' && (
                       t.result?.component ||
                       t.result?.responseControl?.suppressMessage
@@ -80,8 +80,8 @@ export default function ChatInterface() {
                   )) && (
                     <span
                       className={`chat-message ${
-                        message.role === 'user' 
-                          ? 'chat-message-user' 
+                        message.role === 'user'
+                          ? 'chat-message-user'
                           : 'chat-message-assistant'
                       }`}
                     >
@@ -93,7 +93,7 @@ export default function ChatInterface() {
                         }`}
                         components={{
                           a: ({ href, children }) => (
-                            <a 
+                            <a
                               href={href}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -155,7 +155,7 @@ export default function ChatInterface() {
                 placeholder="Type your message here..."
                 className="flex-grow rounded-full border-gray-200 focus:ring-blue-500 focus:border-blue-500"
               />
-              <Button 
+              <Button
                 type="submit"
                 className="rounded-full px-6 bg-blue-600 hover:bg-blue-700 transition-colors"
               >
@@ -168,4 +168,5 @@ export default function ChatInterface() {
     </div>
   );
 }
+
 

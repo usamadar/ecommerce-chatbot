@@ -1,3 +1,38 @@
+/**
+ * This module defines various tools for interacting with the Westwing platform.
+ * Each tool has a specific functionality, parameters, and response structure.
+ * 
+ * Tools:
+ * 
+ * 1. **lookupOrder**
+ *    - Description: Fetch order details from Westwing.
+ *    - Parameters:
+ *      - `orderId` (string): The order number.
+ *      - `email` (string): The email address used for the order.
+ *    - Response: Returns order details along with a response control object for UI rendering.
+ * 
+ * 2. **getWebsiteInfo**
+ *    - Description: Get information from Westwing website pages.
+ *    - Parameters:
+ *      - `topic` (string): The topic to look up information about from the website.
+ *    - Response: Returns relevant content based on the topic, along with sources.
+ * 
+ * 3. **getProductInfo**
+ *    - Description: Get product information by product slug.
+ *    - Parameters:
+ *      - `productId` (string): Product ID or slug.
+ *    - Response: Returns product details along with a response control object for UI rendering.
+ * 
+ * 4. **getReturnPolicy**
+ *    - Description: Get return policy information.
+ *    - Parameters: None.
+ *    - Response: Returns return policy details along with a response control object for UI rendering.
+ * 
+ * Utility Functions:
+ * 
+ * - `getToolsInfo`: Returns an array of tool information including name, description, card availability, and topics.
+ */
+
 import { z } from 'zod';
 import { mockData } from '../mocks';
 import { lookupOrder } from '@/utils/shopify';

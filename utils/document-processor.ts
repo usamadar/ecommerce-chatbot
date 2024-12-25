@@ -1,3 +1,29 @@
+/**
+ * This module provides functionality for processing documents uploaded by users.
+ * It includes methods for validating file types, loading text content, and splitting
+ * the content into manageable chunks for further processing.
+ * 
+ * Constants:
+ * - MAX_FILE_SIZE: The maximum allowed file size for uploads, set to 10MB.
+ * - CHUNK_SIZE: The size of each chunk when splitting the document.
+ * - CHUNK_OVERLAP: The number of overlapping characters between chunks.
+ * 
+ * Types:
+ * - SupportedFileType: A type representing the supported file types, currently only 'text/plain'.
+ * 
+ * Functions:
+ * 
+ * - loadTextContent(buffer: ArrayBuffer): 
+ *   Loads and decodes the content of a text file from an ArrayBuffer.
+ * 
+ * - getContent(type: SupportedFileType, buffer: ArrayBuffer): 
+ *   Retrieves the content of the file based on its type. Currently supports 'text/plain'.
+ * 
+ * - processDocument(file: File): 
+ *   Validates the file type and size, reads the file content, splits it into chunks,
+ *   and returns the chunks along with metadata including the filename, file type, and timestamp.
+ */
+
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
 // 10MB limit

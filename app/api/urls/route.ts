@@ -142,19 +142,52 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
     try {
         const { id } = await req.json();
-        console.log('Deleting document with ID:', id);
-        // Delete from Pinecone
+        console.log('Deleting item with ID:', id);
         const index = pinecone.index(process.env.PINECONE_INDEX!);
-        await index.deleteOne(id);
+
+        // Check if this is a document (IDs start with "doc_")
+        if (id.startsWith('doc_')) {
+            // Get the base document ID (everything before "_chunk")
+            const baseId = id.split('_chunk')[0];
+            console.log('Deleting document chunks with base ID:', baseId);
+
+            // Find all chunks for this document
+            const allChunks = [];
+            let paginationToken = undefined;
+            
+            do {
+                const response = await index.listPaginated({
+                    limit: 100,
+                    paginationToken,
+                    prefix: baseId // Use prefix parameter instead of filter for ID matching
+                });
+                
+                if (response.vectors) {
+                    allChunks.push(...response.vectors);
+                }
+                paginationToken = response.pagination?.next;
+            } while (paginationToken);
+
+            // Delete all chunks
+            if (allChunks.length > 0) {
+                const chunkIds = allChunks.map(chunk => chunk.id!);
+                console.log(`Deleting ${chunkIds.length} chunks for document`);
+                await index.deleteMany(chunkIds);
+            }
+        } else {
+            // For URLs, just delete the single record
+            await index.deleteOne(id);
+        }
         
-        // Remove from local storage
+        // Remove from local storage if it's a URL
         urls = urls.filter(url => url.id !== id);
         
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error('Error deleting item:', error);
         return NextResponse.json(
-            { error: 'Failed to delete URL' },
+            { error: 'Failed to delete item' },
             { status: 500 }
         );
     }
-} 
+}

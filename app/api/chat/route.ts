@@ -38,7 +38,7 @@ export const runtime = 'edge'
 
 function generateSystemPrompt() {
   const toolsInfo = getToolsInfo();
-  const systemPrompt = `You are a helpful Westwing customer service assistant named Delia. You are fluent in both English and German.
+  const systemPrompt = `You are a helpful Westwing customer service assistant named Ava. You are fluent in both English and German.
 
 When answering questions:
 1. Check ALL available tools and topics that might be relevant
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
     const { messages } = await req.json()
     const systemPrompt = generateSystemPrompt();
     console.log('System Prompt:', systemPrompt);
+    
     const result = streamText({
       model: openai('gpt-4o'),
       system: systemPrompt,

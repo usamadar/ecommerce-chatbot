@@ -1,37 +1,26 @@
-/**
- * AdminPage Component
- * 
- * This component serves as the administrative interface for managing URLs and documents.
- * It allows users to add, delete, and upload content, while displaying a list of saved items.
- * 
- * Functionality:
- * - Fetches and displays saved URLs and documents from the server.
- * - Provides forms for adding new URLs and uploading documents.
- * - Handles file selection with validation for supported types and size limits.
- * - Allows users to delete saved URLs and refresh the content list.
- * 
- * State Management:
- * - `savedItems`: Array of saved items fetched from the server.
- * - `newUrl`: State for the new URL input field.
- * - `loading`: Boolean state to indicate loading status for submissions.
- * - `error`: State for handling error messages.
- * - `isLoading`: Boolean state to indicate loading status for fetching items.
- * - `documentCount`: Number of documents currently saved.
- * - `selectedFile`: State for the currently selected file for upload.
- * - `urlDescription`: State for the description of the new URL.
- * - `documentDescription`: State for the description of the document being uploaded.
- */
-
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * Admin page component for content management.
+ * Provides interfaces for adding URLs and uploading documents,
+ * as well as viewing and managing saved content items.
+ * 
+ * @module AdminPage
+ */
+
+import { useState, useEffect, useCallback } from 'react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { SUPPORTED_TYPES, MAX_FILE_SIZE } from '@/utils/document-processor';
-import { Globe, FileText, Loader2 } from 'lucide-react';
+import { Globe, FileText, Loader2, AlertCircle, X } from 'lucide-react';
+import { useContentForm } from '@/components/admin/hooks/useContentForm';
+import { fetchContent, addUrl, uploadDocument, deleteItem } from '@/components/admin/services/content';
 
+/**
+ * Interface representing a saved content item.
+ * Can be either a URL or a document with associated metadata.
+ */
 interface SavedItem {
     id: string;
     url?: string;
@@ -42,104 +31,65 @@ interface SavedItem {
     filename?: string;
 }
 
-interface VectorMetadata {
-    url?: string;
-    description: string;
-    timestamp: string;
-    filename?: string;
-    type?: 'url' | 'document';
-}
-
-interface Vector {
-    id: string;
-    metadata: VectorMetadata;
-}
-
+/**
+ * Admin page component for managing content.
+ * Provides a tabbed interface for adding URLs and uploading documents,
+ * along with a list view of all saved content items.
+ * 
+ * Features:
+ * - URL submission with description
+ * - Document upload with description
+ * - List view of saved content
+ * - Delete functionality with confirmation
+ * - Error handling and loading states
+ * 
+ * @returns {JSX.Element} The rendered admin page component
+ */
 export default function AdminPage() {
     const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
-    const [newUrl, setNewUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [documentCount, setDocumentCount] = useState<number>(0);
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [urlDescription, setUrlDescription] = useState('');
-    const [documentDescription, setDocumentDescription] = useState('');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+    const [fileInputKey, setFileInputKey] = useState<number>(0);
+    const { state, dispatch, handleFileSelect } = useContentForm();
 
-    useEffect(() => {
-        fetchUrls();
-    }, []);
-
-    const fetchUrls = async () => {
+    /**
+     * Fetches saved content items from the API.
+     * Updates the savedItems state and handles loading/error states.
+     */
+    const fetchItems = useCallback(async () => {
         try {
             setIsLoading(true);
-            const response = await fetch('/api/urls');
-            if (!response.ok) {
-                throw new Error('Failed to fetch items');
-            }
-            const data = await response.json();
-            
-            // Group chunks by document ID prefix
-            const documents = new Map();
-            data.vectors.forEach((item: Vector) => {
-                // Handle documents
-                if (item.metadata?.type?.toLowerCase() === 'document') {
-                    const docId = item.id.split('_chunk')[0];
-                    if (!documents.has(docId)) {
-                        documents.set(docId, {
-                            id: docId,
-                            type: 'document',
-                            description: item.metadata.description,
-                            filename: item.metadata.filename,
-                            createdAt: new Date(item.metadata.timestamp)
-                        });
-                    }
-                } 
-                // Handle URLs
-                else if (item.metadata?.isUrl) {
-                    documents.set(item.id, {
-                        id: item.id,
-                        type: 'url',
-                        url: item.metadata.url,
-                        description: item.metadata.description,
-                        createdAt: new Date(item.metadata.timestamp)
-                    });
-                }
-            });
-
-            setSavedItems(Array.from(documents.values()));
-            setDocumentCount(documents.size);
+            const items = await fetchContent();
+            setSavedItems(items);
         } catch (error) {
             setError('Failed to fetch items');
             console.error('Error fetching items:', error);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
+    useEffect(() => {
+        fetchItems();
+    }, [fetchItems]);
+
+    /**
+     * Handles URL form submission.
+     * Adds the URL and its description to the system.
+     * 
+     * @param {React.FormEvent} e - Form submission event
+     */
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
         try {
-            const response = await fetch('/api/urls', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    url: newUrl, 
-                    description: urlDescription 
-                }),
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to add URL');
-            }
-
-            setNewUrl('');
-            setUrlDescription('');
-            await fetchUrls();
+            await addUrl(state.url.value, state.url.description);
+            dispatch({ type: 'RESET_URL_FORM' });
+            await fetchItems();
         } catch (error) {
             setError(error instanceof Error ? error.message : 'Failed to add URL');
             console.error('Error adding URL:', error);
@@ -148,67 +98,62 @@ export default function AdminPage() {
         }
     };
 
+    /**
+     * Handles item deletion with confirmation.
+     * Requires two clicks to confirm deletion.
+     * 
+     * @param {string} id - ID of the item to delete
+     */
     const handleDelete = async (id: string) => {
+        if (showDeleteConfirm !== id) {
+            setShowDeleteConfirm(id);
+            return;
+        }
+
         try {
-            const response = await fetch('/api/urls', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id }),
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete URL');
-            }
-
-            await fetchUrls();
+            await deleteItem(id);
+            setShowDeleteConfirm(null);
+            await fetchItems();
         } catch (error) {
-            setError('Failed to delete URL');
-            console.error('Error deleting URL:', error);
+            setError('Failed to delete item');
+            console.error('Error deleting item:', error);
         }
     };
 
-    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    /**
+     * Handles file input change events.
+     * Validates the selected file and updates form state.
+     * 
+     * @param {React.ChangeEvent<HTMLInputElement>} e - File input change event
+     */
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
-
-        if (!SUPPORTED_TYPES.includes(file.type as any)) {
-            setError('Unsupported file type');
-            return;
+        const error = handleFileSelect(file || null);
+        if (error) {
+            setError(error);
+        } else {
+            setError(null);
         }
-
-        if (file.size > MAX_FILE_SIZE) {
-            setError('File too large (max 10MB)');
-            return;
-        }
-
-        setSelectedFile(file);
-        setError(null);
     };
 
+    /**
+     * Handles document upload form submission.
+     * Uploads the selected file with its description.
+     * 
+     * @param {React.FormEvent} e - Form submission event
+     */
     const handleDocumentUpload = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedFile || !documentDescription) return;
+        if (!state.document.file || !state.document.description) return;
 
         setLoading(true);
         setError(null);
 
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('description', documentDescription);
-
         try {
-            const response = await fetch('/api/documents', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to upload document');
-            }
-
-            await fetchUrls();
-            setSelectedFile(null);
-            setDocumentDescription('');
+            await uploadDocument(state.document.file, state.document.description);
+            dispatch({ type: 'RESET_DOCUMENT_FORM' });
+            setFileInputKey(prev => prev + 1); // Force file input to reset
+            await fetchItems();
         } catch (error) {
             setError('Failed to upload document');
             console.error('Error uploading document:', error);
@@ -225,8 +170,19 @@ export default function AdminPage() {
                 {/* Left Column - Forms */}
                 <div className="lg:col-span-5 space-y-6">
                     {error && (
-                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
-                            {error}
+                        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded flex justify-between items-start">
+                            <div className="flex items-center gap-2">
+                                <AlertCircle className="w-5 h-5" />
+                                <p>{error}</p>
+                            </div>
+                            <button 
+                                onClick={() => setError(null)}
+                                className="text-red-500 hover:text-red-700"
+                                title="Dismiss error"
+                                aria-label="Dismiss error"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         </div>
                     )}
                     
@@ -248,8 +204,8 @@ export default function AdminPage() {
                                     <label className="text-sm font-medium">URL</label>
                                     <Input
                                         type="url"
-                                        value={newUrl}
-                                        onChange={(e) => setNewUrl(e.target.value)}
+                                        value={state.url.value}
+                                        onChange={(e) => dispatch({ type: 'SET_URL', payload: e.target.value })}
                                         placeholder="https://example.com"
                                         required
                                     />
@@ -258,8 +214,8 @@ export default function AdminPage() {
                                     <label className="text-sm font-medium">Description</label>
                                     <Input
                                         type="text"
-                                        value={urlDescription}
-                                        onChange={(e) => setUrlDescription(e.target.value)}
+                                        value={state.url.description}
+                                        onChange={(e) => dispatch({ type: 'SET_URL_DESCRIPTION', payload: e.target.value })}
                                         placeholder="Enter description"
                                         required
                                     />
@@ -286,9 +242,10 @@ export default function AdminPage() {
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Document</label>
                                     <Input
+                                        key={fileInputKey}
                                         type="file"
                                         accept=".txt"
-                                        onChange={handleFileSelect}
+                                        onChange={handleFileChange}
                                         className="cursor-pointer"
                                     />
                                     <p className="text-xs text-gray-500">
@@ -299,15 +256,15 @@ export default function AdminPage() {
                                     <label className="text-sm font-medium">Description</label>
                                     <Input
                                         type="text"
-                                        value={documentDescription}
-                                        onChange={(e) => setDocumentDescription(e.target.value)}
+                                        value={state.document.description}
+                                        onChange={(e) => dispatch({ type: 'SET_DOCUMENT_DESCRIPTION', payload: e.target.value })}
                                         placeholder="Document description"
                                         required
                                     />
                                 </div>
                                 <Button 
                                     type="submit"
-                                    disabled={loading || !selectedFile || !documentDescription}
+                                    disabled={loading || !state.document.file || !state.document.description}
                                     className="w-full"
                                 >
                                     {loading ? (
@@ -331,13 +288,15 @@ export default function AdminPage() {
                             <div>
                                 <h2 className="text-xl font-semibold">Saved Content</h2>
                                 <p className="text-sm text-gray-500">
-                                    {documentCount} item{documentCount !== 1 ? 's' : ''} in index
+                                    {savedItems.length} item{savedItems.length !== 1 ? 's' : ''} in index
                                 </p>
                             </div>
                             <Button 
                                 variant="outline"
-                                onClick={() => fetchUrls()}
+                                onClick={() => fetchItems()}
                                 disabled={isLoading}
+                                title="Refresh content list"
+                                aria-label="Refresh content list"
                             >
                                 {isLoading ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -349,6 +308,7 @@ export default function AdminPage() {
                                             fill="none"
                                             viewBox="0 0 24 24"
                                             stroke="currentColor"
+                                            aria-hidden="true"
                                         >
                                             <path
                                                 strokeLinecap="round"
@@ -411,9 +371,15 @@ export default function AdminPage() {
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleDelete(item.id)}
-                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                    className={`${
+                                                        showDeleteConfirm === item.id
+                                                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                            : 'text-red-600 hover:text-red-700 hover:bg-red-50'
+                                                    }`}
+                                                    title={showDeleteConfirm === item.id ? 'Confirm delete' : 'Delete item'}
+                                                    aria-label={showDeleteConfirm === item.id ? 'Confirm delete' : 'Delete item'}
                                                 >
-                                                    Delete
+                                                    {showDeleteConfirm === item.id ? 'Click to confirm' : 'Delete'}
                                                 </Button>
                                             </div>
                                         </div>
@@ -426,4 +392,4 @@ export default function AdminPage() {
             </div>
         </div>
     );
-} 
+}

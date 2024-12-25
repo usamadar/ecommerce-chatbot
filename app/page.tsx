@@ -25,20 +25,18 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { OrderCard } from '@/components/order-card'
 import { ProductCard } from '@/components/product-card'
 import { ReturnPolicyCard } from '@/components/return-policy-card'
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown'
 
 export default function ChatInterface() {
   const { messages, input, handleInputChange, handleSubmit } = useChat({
     api: '/api/chat',
-    initialMessages: [
-      {
-        id: 'greeting',
-        role: 'assistant',
-        content: "👋 Hi! I'm Delia, your Westwing customer service assistant. How can I help you today? I can help you track orders, answer questions about our products, or assist with any other concerns you might have.",
-      },
-    ],
-  })
+    initialMessages: [{
+      id: 'greeting',
+      role: 'assistant',
+      content: "👋 Hi! I'm Ava, your Westwing customer service assistant. How can I help you today? I can help you track orders, answer questions about our products, or assist with any other concerns you might have.",
+    }],
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -76,8 +74,8 @@ export default function ChatInterface() {
                 >
                   {(message.role === 'user' || !message.toolInvocations?.some(t => 
                     t.state === 'result' && (
-                      t.result?.component ||  // For card components
-                      t.result?.responseControl?.suppressMessage  // For website info
+                      t.result?.component ||
+                      t.result?.responseControl?.suppressMessage
                     )
                   )) && (
                     <span
@@ -110,13 +108,12 @@ export default function ChatInterface() {
                     </span>
                   )}
 
-                  {/* Tool invocations with improved spacing */}
+                  {/* Tool invocations */}
                   <div className="mt-4 space-y-4">
                     {message.toolInvocations?.map((toolInvocation) => {
                       const { toolName, toolCallId, state, result } = toolInvocation;
-
                       if (state === 'result') {
-                        const cardClasses = "mt-2 max-w-md"; // Base classes for all cards
+                        const cardClasses = "mt-2 max-w-md";
                         
                         if (toolName === 'lookupOrder' && !result.error) {
                           return (
@@ -169,6 +166,6 @@ export default function ChatInterface() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 

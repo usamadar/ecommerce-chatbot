@@ -1,5 +1,11 @@
 import * as cheerio from 'cheerio';
 
+/**
+ * Scrapes a URL and returns the text content.
+ * 
+ * @param url - The URL to scrape.
+ * @returns A Promise that resolves to the scraped text content.
+ */
 export async function scrapeUrl(url: string): Promise<string> {
     try {
         const response = await fetch(url);

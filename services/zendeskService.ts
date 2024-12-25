@@ -1,3 +1,8 @@
+/**
+ * This file contains the ZendeskService class, which provides methods to interact with the Zendesk API.
+ * It includes functionality to create support tickets in Zendesk using provided credentials.
+ */
+
 import axios from 'axios';
 
 interface ZendeskTicketResponse {
@@ -7,6 +12,9 @@ interface ZendeskTicketResponse {
   };
 }
 
+/**
+ * Service class to interact with Zendesk API.
+ */
 export class ZendeskService {
   private baseUrl: string;
   private auth: {
@@ -14,6 +22,10 @@ export class ZendeskService {
     password: string;
   };
 
+  /**
+   * Initializes the ZendeskService with necessary credentials.
+   * @throws Will throw an error if any required environment variable is missing.
+   */
   constructor() {
     const subdomain = process.env.ZENDESK_SUBDOMAIN;
     if (!subdomain) throw new Error('ZENDESK_SUBDOMAIN is required');
@@ -31,6 +43,12 @@ export class ZendeskService {
     };
   }
 
+  /**
+   * Creates a new support ticket in Zendesk.
+   * @param {string} description - The description of the issue or reason for the ticket.
+   * @param {string} [customerEmail] - The email address of the customer (optional).
+   * @returns {Promise<{success: boolean, ticketId?: number, url?: string, error?: string}>} An object containing the success status, ticket ID, and URL if successful.
+   */
   async createTicket(description: string, customerEmail?: string) {
     try {
       const response = await axios.post<ZendeskTicketResponse>(
@@ -70,4 +88,8 @@ export class ZendeskService {
   }
 }
 
+/**
+ * An instance of the ZendeskService.
+ * @type {ZendeskService}
+ */
 export const zendeskService = new ZendeskService();

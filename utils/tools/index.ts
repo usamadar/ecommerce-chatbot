@@ -47,7 +47,7 @@ const pinecone = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY!
 });
 
-import { handoffToAgent } from './zendesk';
+import { handoffToAgent } from './zendeskTool';
 
 export const tools = {
   handoffToAgent,

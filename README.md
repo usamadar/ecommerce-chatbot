@@ -20,6 +20,27 @@ Before you begin, ensure you have:
 - OpenAI API key
 - Pinecone account and API key
 
+## Setup
+
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/yourusername/shopify-chat-agent.git
+    cd shopify-chat-agent
+    ```
+
+2. Install dependencies:
+    ```bash
+    npm install
+    ```
+
+3. Set up environment variables:
+    Create a `.env` file in the root directory and add the following variables:
+    ```
+    SHOPIFY_API_KEY=your_shopify_api_key
+    SHOPIFY_API_SECRET=your_shopify_api_secret
+    SHOPIFY_STORE_URL=your_shopify_store_url
+    ```
+
 ## Installation
 
 1. Clone the repository:
@@ -50,6 +71,11 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 # Pinecone Configuration
 PINECONE_API_KEY=your_pinecone_api_key
 PINECONE_INDEX=your_pinecone_index_name
+
+# Zendesk Configuration
+ZENDESK_SUBDOMAIN=your_zendesk_subdomain
+ZENDESK_API_TOKEN=your_zendesk_api_token
+ZENDESK_EMAIL=your_zendesk_email
 ```
 
 ## Development
@@ -64,45 +90,38 @@ yarn dev
 
 The application will be available at [http://localhost:3000](http://localhost:3000).
 
+## Running the Project
+
+1. Start the development server:
+    ```bash
+    npm run dev
+    ```
+
+2. Open your browser and navigate to `http://localhost:3000` to see the application running.
+
 ## Project Structure
 
 ```
 shopify-chat-agent/
+├── .next/                  # Next.js build output
 ├── app/                    # Next.js 13+ App Router
-│   ├── admin/             # Admin dashboard
-│   ├── api/               # API routes
-│   │   ├── chat/         # Chat endpoints
-│   │   ├── documents/    # Document management
-│   │   └── urls/         # URL processing
-│   └── page.tsx          # Main chat interface
-├── components/            # React components
-│   ├── admin/            # Admin components
-│   └── ui/               # Shared UI components
-├── hooks/                # Custom React hooks
-├── lib/                  # Utility functions
-├── public/               # Static assets
-├── services/             # External service integrations
-├── types/                # TypeScript definitions
-└── utils/                # Helper functions
+│   ├── api/                # API routes
+│   ├── admin/              # Admin pages
+│   ├── components/         # React components
+│   ├── hooks/              # Custom hooks
+│   ├── lib/                # Utility functions and libraries
+│   ├── pages/              # Page components
+│   ├── styles/             # Global styles
+│   ├── utils/              # Utility functions
+├── node_modules/           # Node.js modules
+├── public/                 # Public assets
+├── .env.local              # Environment variables
+├── .gitignore              # Git ignore file
+├── README.md               # Project README file
+├── package.json            # NPM package configuration
+├── tsconfig.json           # TypeScript configuration
+└── ...                     # Other project files
 ```
-
-## Key Components
-
-### Chat Interface
-- Located at the root route `/`
-- Provides AI-powered responses to customer queries
-- Integrates with Shopify for order and product information
-
-### Admin Dashboard
-- Access via `/admin`
-- Manage chat content and responses
-- Configure system settings
-- Monitor chat interactions
-
-### API Routes
-- `/api/chat`: Handles chat interactions and AI processing
-- `/api/documents`: Manages document storage and retrieval
-- `/api/urls`: Processes URLs and web scraping
 
 ## Configuration
 

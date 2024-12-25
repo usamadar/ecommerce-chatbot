@@ -1,6 +1,29 @@
-import { z } from "zod";
-import { zendeskService } from "@/services/zendesk";
+/**
+ * This module provides a tool for transferring conversations to a human support agent
+ * using the Zendesk service. It defines the `handoffToAgent` object which includes
+ * the description, parameters, and execution logic for creating a support ticket
+ * and notifying the customer about the handoff.
+ */
 
+import { z } from "zod";
+import { zendeskService } from "@/services/zendeskService";
+
+/**
+ * @typedef {Object} HandoffParameters
+ * @property {string} [customerEmail] - Customer email address for follow-up
+ * @property {string} [reason] - Reason for requesting human agent
+ */
+
+/**
+ * Transfers the conversation to a human support agent.
+ * 
+ * @type {Object}
+ * @property {string} description - Description of the action
+ * @property {boolean} hasCard - Indicates if the action has a card
+ * @property {string[]} topics - Topics related to the action
+ * @property {z.ZodObject} parameters - Parameters for the action
+ * @property {Function} execute - Function to execute the action
+ */
 export const handoffToAgent = {
   description: "Transfer the conversation to a human support agent",
   hasCard: false,
@@ -9,6 +32,12 @@ export const handoffToAgent = {
     customerEmail: z.string().email().optional().describe("Customer email address for follow-up"),
     reason: z.string().optional().describe("Reason for requesting human agent")
   }),
+  /**
+   * Executes the handoff to a human agent.
+   * 
+   * @param {HandoffParameters} params - Parameters for the handoff
+   * @returns {Promise<Object>} Result of the handoff action
+   */
   execute: async ({ customerEmail, reason }: { customerEmail?: string, reason?: string }) => {
     try {
       const result = await zendeskService.createTicket(

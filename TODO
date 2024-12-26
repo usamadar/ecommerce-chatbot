@@ -102,3 +102,10 @@ Connectivity features for extending functionality.
 - Regular feedback collection from merchants to guide feature priority
 - Security review required for all new features
 - Performance impact assessment needed for each feature
+
+## Clean up
+- When passing chat history, it can get too big 
+- Is there an inefficeicy of clearing messageStore and repopulating it each time?
+- The message store probably should be persistent to not create a memory bloat. 
+- Why doesn't it always ask me for email when i want to log a ticket 
+- 

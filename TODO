@@ -105,7 +105,5 @@ Connectivity features for extending functionality.
 
 ## Clean up
 - When passing chat history, it can get too big 
-- Is there an inefficeicy of clearing messageStore and repopulating it each time?
 - The message store probably should be persistent to not create a memory bloat. 
-- Why doesn't it always ask me for email when i want to log a ticket 
-- 
+- Last message where used asked for human agent doesn;t get logged in ticket. 

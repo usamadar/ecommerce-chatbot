@@ -31,8 +31,8 @@ export const handoffToAgent = {
   hasCard: false,
   topics: ["support", "help", "agent", "human"],
   parameters: z.object({
-    customerEmail: z.string().email().optional().describe("Customer email address for follow-up"),
-    reason: z.string().optional().describe("Reason for requesting human agent")
+    customerEmail: z.string().email().describe("Customer email address for follow-up"),
+    reason: z.string().describe("Reason for requesting human agent")
   }),
   /**
    * Executes the handoff to a human agent.
@@ -40,13 +40,13 @@ export const handoffToAgent = {
    * @param {HandoffParameters} params - Parameters for the handoff
    * @returns {Promise<Object>} Result of the handoff action
    */
-  execute: async ({ customerEmail, reason }: { customerEmail?: string, reason?: string }) => {
+  execute: async ({ customerEmail, reason }: { customerEmail: string, reason: string }) => {
     try {
       // Get formatted chat history from the message store
       const chatHistoryText = messageStore.getFormattedHistory();
 
       const result = await zendeskService.createTicket(
-        `Reason for transfer: ${reason || "Not specified"}\n\nChat History:\n${chatHistoryText}`,
+        `Reason for transfer: ${reason}\n\nChat History:\n${chatHistoryText}`,
         customerEmail
       );
 
@@ -56,8 +56,8 @@ export const handoffToAgent = {
           responseControl: {
             type: "handoff",
             forcedResponse: {
-              en: "I'll transfer you to a human agent who can help you further. A support ticket has been created and an agent will review your conversation and get back to you shortly.",
-              de: "Ich werde Sie an einen menschlichen Mitarbeiter weiterleiten, der Ihnen weiterhelfen kann. Ein Support-Ticket wurde erstellt und ein Mitarbeiter wird sich in Kürze mit Ihnen in Verbindung setzen."
+              en: `Thank you for providing your email (${customerEmail}). I'll transfer you to a human agent who can help you with: "${reason}". A support ticket has been created and an agent will review your conversation and get back to you shortly.`,
+              de: `Vielen Dank für Ihre E-Mail-Adresse (${customerEmail}). Ich werde Sie an einen menschlichen Mitarbeiter weiterleiten, der Ihnen mit folgendem Anliegen helfen kann: "${reason}". Ein Support-Ticket wurde erstellt und ein Mitarbeiter wird sich in Kürze mit Ihnen in Verbindung setzen.`
             },
             data: {
               ticketUrl: result.url,

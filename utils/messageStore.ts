@@ -4,44 +4,99 @@
  */
 
 export interface ChatMessage {
+  id?: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  createdAt?: Date;
+  toolCalls?: any[];
+  toolResults?: any[];
+  metadata?: {
+    usage?: {
+      completionTokens?: number;
+      promptTokens?: number;
+      totalTokens?: number;
+    };
+    finishReason?: string;
+  };
 }
 
 class MessageStore {
   private messages: ChatMessage[] = [];
 
-  /**
-   * Add a new message to the store
-   */
-  addMessage(message: ChatMessage) {
-    this.messages.push(message);
-    console.log('Added message:', message);
-    console.log('Current messages:', this.messages);
+  async saveChat({ text, toolCalls, toolResults, messages, usage, finishReason }: { 
+    text: string;
+    toolCalls?: any[];
+    toolResults?: any[];
+    messages: ChatMessage[];
+    usage?: {
+      completionTokens?: number;
+      promptTokens?: number;
+      totalTokens?: number;
+    };
+    finishReason?: string;
+  }) {
+    console.log('saveChat params:', {
+      text,
+      toolCalls,
+      toolResults,
+      messages,
+      usage,
+      finishReason
+    });
+    
+    // Get the last user message (which triggered this response)
+    const lastUserMessage = messages[messages.length - 1];
+    
+    // If this is our first save and messages array has content, store the initial greeting
+    if (this.messages.length === 0 && messages.length > 0) {
+      const initialGreeting = messages[0];
+      if (initialGreeting.role === 'assistant') {
+        this.messages.push({
+          ...initialGreeting,
+          createdAt: new Date(),
+          id: crypto.randomUUID()
+        });
+      }
+    }
+    
+    // Only store the latest exchange (last user message and new assistant response)
+    if (lastUserMessage && lastUserMessage.role === 'user') {
+      // Store the latest user message
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: lastUserMessage.content,
+        createdAt: new Date(),
+        id: crypto.randomUUID()
+      };
+      this.messages.push(userMessage);
+
+      // Store the new assistant response with metadata
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: text,
+        toolCalls,
+        toolResults,
+        createdAt: new Date(),
+        id: crypto.randomUUID(),
+        metadata: {
+          usage,
+          finishReason
+        }
+      };
+      this.messages.push(assistantMessage);
+    }
   }
 
-  /**
-   * Get all stored messages
-   */
   getMessages(): ChatMessage[] {
     return this.messages;
   }
 
-  /**
-   * Clear all stored messages
-   */
   clearMessages() {
     this.messages = [];
   }
 
-  /**
-   * Get messages formatted as a string
-   */
   getFormattedHistory(): string {
-    console.log('Getting formatted history from messages:', this.messages);
-    
     if (this.messages.length === 0) {
-      console.log('No messages available');
       return "No chat history available.";
     }
 
@@ -50,7 +105,6 @@ class MessageStore {
       .map(msg => `${msg.role}: ${msg.content}`)
       .join("\n");
     
-    console.log('Formatted history:', formattedHistory);
     return formattedHistory;
   }
 }

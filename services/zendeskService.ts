@@ -51,20 +51,29 @@ export class ZendeskService {
    */
   async createTicket(description: string, customerEmail?: string) {
     try {
+      const ticketData: any = {
+        ticket: {
+          subject: 'Chat Transfer Request',
+          comment: {
+            body: description,
+            public: false
+          },
+          priority: 'normal',
+          type: 'question'
+        }
+      };
+
+      // If customerEmail is provided, set them as the requester
+      if (customerEmail) {
+        ticketData.ticket.requester = {
+          email: customerEmail,
+          name: customerEmail  // Just use email as name
+        };
+      }
+
       const response = await axios.post<ZendeskTicketResponse>(
         `${this.baseUrl}/tickets`,
-        {
-          ticket: {
-            subject: 'Chat Transfer Request',
-            comment: {
-              body: description,
-              public: false
-            },
-            priority: 'normal',
-            type: 'question',
-            requester_email: customerEmail
-          }
-        },
+        ticketData,
         {
           auth: this.auth,
           headers: {

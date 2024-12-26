@@ -32,7 +32,7 @@ import { streamText } from 'ai'
 import { NextRequest } from 'next/server'
 import { tools } from '@/utils/tools'
 import { getToolsInfo } from '@/utils/tools/index'
-import { messageStore, ChatMessage } from '@/utils/messageStore'
+import { messageStore } from '@/utils/messageStore'
 
 export const runtime = 'edge'
 
@@ -62,6 +62,22 @@ If response includes responseControl.type = 'card':
 - Do not add extra information
 - The card will display automatically
 
+Special Instructions for Human Agent Handoff:
+1. When a user requests to speak with a human agent or when you need to transfer to human support:
+   - ALWAYS ask for their email address first even if it was provided before. 
+   - ALWAYS ask for a brief reason for needing human support if not provided
+   - Only proceed with the handoff after collecting both pieces of information
+   - If the user provides only one piece of information, politely ask for the missing information
+2. Example responses for collecting information:
+   English:
+   - "I'll help transfer you to a human agent. Could you please provide:
+     1. Your email address for follow-up
+     2. A brief description of your concern"
+   German:
+   - "Ich helfe Ihnen gerne bei der Weiterleitung an einen Mitarbeiter. Bitte teilen Sie mir mit:
+     1. Ihre E-Mail-Adresse für die weitere Kommunikation
+     2. Eine kurze Beschreibung Ihres Anliegens"
+
 ${toolsInfo.map(tool => `
 ${tool.name}:
 - Description: ${tool.description}
@@ -74,23 +90,9 @@ ${tool.name}:
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json()
-    console.log('Received messages:', messages);
-    
-    // Clear previous messages and store new ones
-    messageStore.clearMessages();
-    console.log('Cleared previous messages');
-    
-    // Store all messages from the conversation
-    messages.forEach((message: ChatMessage) => {
-      console.log('Processing message:', message);
-      if (message.role === 'user' || message.role === 'assistant') {
-        messageStore.addMessage(message);
-      }
-    });
-
+    const { messages } = await req.json();
     const systemPrompt = generateSystemPrompt();
-    console.log('System Prompt:', systemPrompt);
+    //console.log('System Prompt:', systemPrompt);
     
     // Get the response stream
     const result = streamText({
@@ -99,56 +101,20 @@ export async function POST(req: NextRequest) {
       messages,
       tools,
       maxSteps: 5,
-      toolChoice: 'auto'
+      toolChoice: 'auto',
+      async onFinish({ text, toolCalls, toolResults, usage, finishReason }) {
+        // Store both the user message and assistant's response
+        await messageStore.saveChat({ 
+          text, 
+          toolCalls, 
+          toolResults,
+          messages,
+          usage,
+          finishReason
+        });
+      },
     });
-
-    // Create a text decoder to handle the stream properly
-    const decoder = new TextDecoder();
-
-    // Create a transform stream to intercept and store assistant messages
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        // Log the raw chunk for debugging
-        const text = decoder.decode(chunk, { stream: true });
-        console.log('Raw chunk:', text);
-        
-        // Check if it starts with "data: "
-        if (text.startsWith('data: ')) {
-          try {
-            const jsonStr = text.slice(6); // Remove "data: " prefix
-            const data = JSON.parse(jsonStr);
-            console.log('Parsed data:', data);
-            
-            // Handle different message formats
-            if (data.type === 'text' && data.content) {
-              messageStore.addMessage({
-                role: 'assistant',
-                content: data.content
-              });
-            } else if (data.role === 'assistant' && data.content) {
-              messageStore.addMessage({
-                role: 'assistant',
-                content: data.content
-              });
-            } else if (data.message?.content) {
-              messageStore.addMessage({
-                role: 'assistant',
-                content: data.message.content
-              });
-            }
-          } catch (e) {
-            console.error('Error parsing data:', e);
-          }
-        }
-        
-        // Forward the original chunk
-        controller.enqueue(chunk);
-      }
-    });
-
-    // Pipe through our transform stream
-    const responseStream = result.toDataStream().pipeThrough(transformStream);
-    return new Response(responseStream);
+    return new Response(result.toDataStream());
   } catch (error) {
     console.error('❌ Error:', error);
     throw error;

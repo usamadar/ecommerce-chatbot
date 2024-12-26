@@ -32,6 +32,7 @@ import { streamText } from 'ai'
 import { NextRequest } from 'next/server'
 import { tools } from '@/utils/tools'
 import { getToolsInfo } from '@/utils/tools/index'
+import { messageStore, ChatMessage } from '@/utils/messageStore'
 
 export const runtime = 'edge'
 
@@ -74,9 +75,24 @@ ${tool.name}:
 export async function POST(req: NextRequest) {
   try {
     const { messages } = await req.json()
+    console.log('Received messages:', messages);
+    
+    // Clear previous messages and store new ones
+    messageStore.clearMessages();
+    console.log('Cleared previous messages');
+    
+    // Store all messages from the conversation
+    messages.forEach((message: ChatMessage) => {
+      console.log('Processing message:', message);
+      if (message.role === 'user' || message.role === 'assistant') {
+        messageStore.addMessage(message);
+      }
+    });
+
     const systemPrompt = generateSystemPrompt();
     console.log('System Prompt:', systemPrompt);
     
+    // Get the response stream
     const result = streamText({
       model: openai('gpt-4o'),
       system: systemPrompt,
@@ -86,7 +102,53 @@ export async function POST(req: NextRequest) {
       toolChoice: 'auto'
     });
 
-    return result.toDataStreamResponse();
+    // Create a text decoder to handle the stream properly
+    const decoder = new TextDecoder();
+
+    // Create a transform stream to intercept and store assistant messages
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        // Log the raw chunk for debugging
+        const text = decoder.decode(chunk, { stream: true });
+        console.log('Raw chunk:', text);
+        
+        // Check if it starts with "data: "
+        if (text.startsWith('data: ')) {
+          try {
+            const jsonStr = text.slice(6); // Remove "data: " prefix
+            const data = JSON.parse(jsonStr);
+            console.log('Parsed data:', data);
+            
+            // Handle different message formats
+            if (data.type === 'text' && data.content) {
+              messageStore.addMessage({
+                role: 'assistant',
+                content: data.content
+              });
+            } else if (data.role === 'assistant' && data.content) {
+              messageStore.addMessage({
+                role: 'assistant',
+                content: data.content
+              });
+            } else if (data.message?.content) {
+              messageStore.addMessage({
+                role: 'assistant',
+                content: data.message.content
+              });
+            }
+          } catch (e) {
+            console.error('Error parsing data:', e);
+          }
+        }
+        
+        // Forward the original chunk
+        controller.enqueue(chunk);
+      }
+    });
+
+    // Pipe through our transform stream
+    const responseStream = result.toDataStream().pipeThrough(transformStream);
+    return new Response(responseStream);
   } catch (error) {
     console.error('❌ Error:', error);
     throw error;

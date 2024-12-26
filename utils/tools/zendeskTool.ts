@@ -8,6 +8,8 @@
 import { z } from "zod";
 import { zendeskService } from "@/services/zendeskService";
 
+import { messageStore } from '../messageStore';
+
 /**
  * @typedef {Object} HandoffParameters
  * @property {string} [customerEmail] - Customer email address for follow-up
@@ -40,8 +42,11 @@ export const handoffToAgent = {
    */
   execute: async ({ customerEmail, reason }: { customerEmail?: string, reason?: string }) => {
     try {
+      // Get formatted chat history from the message store
+      const chatHistoryText = messageStore.getFormattedHistory();
+
       const result = await zendeskService.createTicket(
-        `Reason for transfer: ${reason || "Not specified"}`,
+        `Reason for transfer: ${reason || "Not specified"}\n\nChat History:\n${chatHistoryText}`,
         customerEmail
       );
 

@@ -19,17 +19,19 @@
 'use client'
 
 import { useChat } from 'ai/react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { OrderCard } from '@/components/order-card'
 import { ProductCard } from '@/components/product-card'
 import { ReturnPolicyCard } from '@/components/return-policy-card'
-import { useEffect, useRef } from 'react';
+import { OrderLookupForm } from '@/components/order-lookup-form'
+import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown'
 
 export default function ChatInterface() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const [showOrderForm, setShowOrderForm] = useState(false);
+  const { messages, input, handleInputChange, handleSubmit, setInput } = useChat({
     api: '/api/chat',
     initialMessages: [{
       id: 'greeting',
@@ -46,7 +48,30 @@ export default function ChatInterface() {
 
   useEffect(() => {
     scrollToBottom();
+    
+    // Check last assistant message for order lookup request
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant') {
+      const isAskingForOrder = lastMessage.content.toLowerCase().includes('order') && 
+        (lastMessage.content.toLowerCase().includes('email') || 
+         lastMessage.content.toLowerCase().includes('order id') ||
+         lastMessage.content.toLowerCase().includes('order number'));
+      
+      setShowOrderForm(isAskingForOrder);
+    }
   }, [messages]);
+
+  const handleOrderLookup = async (orderId: string, email: string) => {
+    setShowOrderForm(false);
+    setInput(`Order ID: ${orderId}, Email: ${email}`);
+    // Need to wait for next tick to ensure input is set
+    await new Promise(resolve => setTimeout(resolve, 0));
+    // Find and submit the chat form
+    const chatForm = document.querySelector('form') as HTMLFormElement;
+    if (chatForm) {
+      chatForm.requestSubmit();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -146,6 +171,13 @@ export default function ChatInterface() {
             </div>
           </ScrollArea>
 
+          {/* Order Lookup Form */}
+          {showOrderForm && (
+            <div className="px-6">
+              <OrderLookupForm onSubmit={handleOrderLookup} />
+            </div>
+          )}
+
           {/* Input Form */}
           <div className="border-t bg-gray-50 p-4">
             <form onSubmit={handleSubmit} className="flex space-x-2">
@@ -168,5 +200,3 @@ export default function ChatInterface() {
     </div>
   );
 }
-
-

@@ -131,7 +131,7 @@ export default function ChatInterface() {
                     message.role === 'user' ? 'text-right' : 'text-left'
                   }`}
                 >
-                  {(message.role === 'user' || !message.toolInvocations?.some(t =>
+                  {message.content && (message.role === 'user' || !message.toolInvocations?.some(t =>
                     t.state === 'result' && (
                       t.result?.component ||
                       t.result?.responseControl?.suppressMessage
@@ -170,11 +170,11 @@ export default function ChatInterface() {
                   {/* Tool invocations */}
                   <div className="mt-4 space-y-4">
                     {message.toolInvocations?.map((toolInvocation) => {
+                     // @ts-expect-error - ToolInvocation type doesn't include result property
                       const { toolName, toolCallId, state, result } = toolInvocation;
-                      if (state === 'result' && toolInvocation.result) {
-                        const cardClasses = "mt-2 max-w-md";
-                        const result = toolInvocation.result;
-                        
+                      const cardClasses = "mt-2 max-w-md";
+                      
+                      if (state === 'result' && result) {
                         if (toolName === 'lookupOrder' && !('error' in result)) {
                           return (
                             <div key={toolCallId} className={cardClasses}>

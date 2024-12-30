@@ -30,46 +30,76 @@
  * />
  */
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import Image from 'next/image';
+
+type FulfillmentStatus = 
+  | 'FULFILLED'
+  | 'IN_PROGRESS'
+  | 'ON_HOLD'
+  | 'OPEN'
+  | 'PARTIALLY_FULFILLED'
+  | 'PENDING_FULFILLMENT'
+  | 'REQUEST_DECLINED'
+  | 'RESTOCKED'
+  | 'SCHEDULED'
+  | 'UNFULFILLED';
+
+interface Price {
+  amount: string;
+  currencyCode: string;
+}
+
+interface Address {
+  address1: string;
+  city: string;
+  country: string;
+  zip: string;
+}
+
+interface LineItem {
+  title: string;
+  quantity: number;
+  originalPrice: Price;
+  image?: {
+    url: string;
+    altText: string;
+  };
+}
+
+interface Fulfillment {
+  trackingInfo: {
+    number: string;
+    url: string;
+  };
+  deliveredAt: string | null;
+  estimatedDeliveryAt: string | null;
+}
 
 interface OrderCardProps {
   name: string;
   email: string;
-  displayFulfillmentStatus: string;
+  displayFulfillmentStatus: FulfillmentStatus;
   createdAt: string;
-  totalPrice: {
-    amount: string;
-    currencyCode: string;
-  };
-  shippingAddress?: {
-    address1: string;
-    city: string;
-    country: string;
-    zip: string;
-  };
-  lineItems: Array<{
-    title: string;
-    quantity: number;
-    originalPrice: {
-      amount: string;
-      currencyCode: string;
-    };
-    image?: {
-      url: string;
-      altText: string;
-    };
-  }>;
-  fulfillments: Array<{
-    trackingInfo: {
-      number: string;
-      url: string;
-    };
-    deliveredAt: string | null;
-    estimatedDeliveryAt: string | null;
-  }>;
+  totalPrice: Price;
+  shippingAddress?: Address;
+  lineItems: LineItem[];
+  fulfillments: Fulfillment[];
   className?: string;
 }
+
+const statusConfig: Record<FulfillmentStatus, { emoji: string; label: string }> = {
+  FULFILLED: { emoji: '✅', label: 'Fulfilled' },
+  IN_PROGRESS: { emoji: '🚚', label: 'In Progress' },
+  ON_HOLD: { emoji: '⏸️', label: 'On Hold' },
+  OPEN: { emoji: '📦', label: 'Open' },
+  PARTIALLY_FULFILLED: { emoji: '⚡', label: 'Partially Fulfilled' },
+  PENDING_FULFILLMENT: { emoji: '⏳', label: 'Pending' },
+  REQUEST_DECLINED: { emoji: '❌', label: 'Declined' },
+  RESTOCKED: { emoji: '🔄', label: 'Restocked' },
+  SCHEDULED: { emoji: '📅', label: 'Scheduled' },
+  UNFULFILLED: { emoji: '📦', label: 'Unfulfilled' }
+};
 
 export function OrderCard({ 
   name, 
@@ -82,27 +112,28 @@ export function OrderCard({
   fulfillments,
   className 
 }: OrderCardProps) {
-  // Guard clause for invalid data
+  // Validate required props
   if (!name || !displayFulfillmentStatus || !lineItems) {
-    return null;
+    console.error('OrderCard: Missing required props');
+    return (
+      <div className={cn("bg-white border border-gray-100 rounded-xl p-4", className)}>
+        <p className="text-red-500">Error: Missing order information</p>
+      </div>
+    );
   }
 
-  const statusEmoji = {
-    'FULFILLED': '✅',
-    'IN_PROGRESS': '🚚',
-    'ON_HOLD': '⏸️',
-    'OPEN': '📦',
-    'PARTIALLY_FULFILLED': '⚡',
-    'PENDING_FULFILLMENT': '⏳',
-    'REQUEST_DECLINED': '❌',
-    'RESTOCKED': '🔄',
-    'SCHEDULED': '📅',
-    'UNFULFILLED': '📦'
-  }[displayFulfillmentStatus] || '📦';
+  // Validate line items
+  if (!Array.isArray(lineItems) || lineItems.length === 0) {
+    console.error('OrderCard: Invalid line items');
+    return (
+      <div className={cn("bg-white border border-gray-100 rounded-xl p-4", className)}>
+        <p className="text-red-500">Error: Invalid order items</p>
+      </div>
+    );
+  }
 
+  const { emoji, label } = statusConfig[displayFulfillmentStatus] || { emoji: '📦', label: 'Unknown' };
   const orderDate = new Date(createdAt).toLocaleDateString();
-  
-  // Get tracking info from the most recent fulfillment
   const latestFulfillment = fulfillments[0];
   const hasTracking = latestFulfillment?.trackingInfo.number;
 
@@ -117,8 +148,11 @@ export function OrderCard({
           <h3 className="font-semibold text-gray-900">
             📦 Order {name}
           </h3>
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm bg-gray-100">
-            {statusEmoji} {displayFulfillmentStatus.replace('_', ' ')}
+          <span 
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-sm bg-gray-100"
+            aria-label={`Order status: ${label}`}
+          >
+            {emoji} {label}
           </span>
         </div>
         <div className="mt-1 text-sm text-gray-500">
@@ -186,10 +220,12 @@ export function OrderCard({
                     {item.image ? (
                       <Image
                         src={item.image.url}
-                        alt={item.image.altText}
+                        alt={item.image.altText || `Image of ${item.title}`}
                         fill
                         className="object-cover"
                         sizes="64px"
+                        priority={index < 3}
+                        loading={index < 3 ? 'eager' : 'lazy'}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -237,4 +273,4 @@ export function OrderCard({
       </div>
     </div>
   )
-} 
+}

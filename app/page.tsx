@@ -28,9 +28,30 @@ import { ReturnPolicyCard } from '@/components/return-policy-card'
 import { OrderLookupForm } from '@/components/order-lookup-form'
 import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown'
+import { RatingComponent } from '../components/rating'
 
 export default function ChatInterface() {
   const [showOrderForm, setShowOrderForm] = useState(false);
+  const [chatEnded, setChatEnded] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+  const handleRatingSubmit = async (rating: number) => {
+    try {
+      const response = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ rating }),
+      });
+      
+      if (response.ok) {
+        setRatingSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+  };
+
   const { messages, input, handleInputChange, handleSubmit, setInput } = useChat({
     api: '/api/chat',
     initialMessages: [{
@@ -49,15 +70,28 @@ export default function ChatInterface() {
   useEffect(() => {
     scrollToBottom();
     
-    // Check last assistant message for order lookup request
+    // Check last assistant message
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === 'assistant') {
+      // Check for order lookup request
       const isAskingForOrder = lastMessage.content.toLowerCase().includes('order') && 
         (lastMessage.content.toLowerCase().includes('email') || 
          lastMessage.content.toLowerCase().includes('order id') ||
          lastMessage.content.toLowerCase().includes('order number'));
       
       setShowOrderForm(isAskingForOrder);
+
+      // Check if chat has ended
+      const chatEndedPhrases = [
+        'goodbye',
+        'thank you',
+        'have a great day',
+        'end of conversation'
+      ];
+      const hasEnded = chatEndedPhrases.some(phrase => 
+        lastMessage.content.toLowerCase().includes(phrase)
+      );
+      setChatEnded(hasEnded);
     }
   }, [messages]);
 
@@ -137,10 +171,11 @@ export default function ChatInterface() {
                   <div className="mt-4 space-y-4">
                     {message.toolInvocations?.map((toolInvocation) => {
                       const { toolName, toolCallId, state, result } = toolInvocation;
-                      if (state === 'result') {
+                      if (state === 'result' && toolInvocation.result) {
                         const cardClasses = "mt-2 max-w-md";
+                        const result = toolInvocation.result;
                         
-                        if (toolName === 'lookupOrder' && !result.error) {
+                        if (toolName === 'lookupOrder' && !('error' in result)) {
                           return (
                             <div key={toolCallId} className={cardClasses}>
                               <OrderCard {...result} />
@@ -170,6 +205,12 @@ export default function ChatInterface() {
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
+
+          {chatEnded && !ratingSubmitted && (
+            <div className="p-6 border-t">
+              <RatingComponent onRate={handleRatingSubmit} />
+            </div>
+          )}
 
           {/* Order Lookup Form */}
           {showOrderForm && (

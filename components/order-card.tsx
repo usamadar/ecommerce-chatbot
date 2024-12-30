@@ -85,6 +85,7 @@ interface OrderCardProps {
   shippingAddress?: Address;
   lineItems: LineItem[];
   fulfillments: Fulfillment[];
+  displayName?: string;
   className?: string;
 }
 
@@ -110,6 +111,7 @@ export function OrderCard({
   shippingAddress,
   lineItems, 
   fulfillments,
+  displayName,
   className 
 }: OrderCardProps) {
   // Validate required props
@@ -165,6 +167,7 @@ export function OrderCard({
         {/* Customer Info */}
         <div>
           <h4 className="text-sm font-medium text-gray-500 mb-1">Customer</h4>
+          {displayName && <p className="text-sm text-gray-900 font-medium">{displayName}</p>}
           <p className="text-sm text-gray-900">{email}</p>
         </div>
 

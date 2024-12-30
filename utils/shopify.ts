@@ -11,6 +11,7 @@ import axios from 'axios';
 interface OrderResponse {
   name: string; // The name associated with the order
   email: string; // The email address used for the order
+  displayName?: string; // The customer's display name
   displayFulfillmentStatus: string; // The current fulfillment status of the order
   createdAt: string; // The date and time when the order was created
   totalPrice: {
@@ -142,6 +143,9 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
                     deliveredAt
                     estimatedDeliveryAt
                   }
+                  customer {
+                    displayName
+                  }
                 }
               }
             }
@@ -179,6 +183,7 @@ export async function lookupOrder(orderNumber: string, email: string): Promise<O
     return {
       name: order.name,
       email: order.email,
+      displayName: order.customer?.displayName,
       displayFulfillmentStatus: order.displayFulfillmentStatus,
       createdAt: order.createdAt,
       totalPrice: {

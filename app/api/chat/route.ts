@@ -61,23 +61,6 @@ If response includes responseControl.type = 'card':
 - Use EXACTLY the forcedResponse (translate to German if user wrote in German)
 - Do not add extra information
 - The card will display automatically
-
-Special Instructions for Human Agent Handoff:
-1. When a user requests to speak with a human agent or when you need to transfer to human support:
-   - ALWAYS ask for their email address first even if it was provided before. 
-   - ALWAYS ask for a brief reason for needing human support if not provided
-   - Only proceed with the handoff after collecting both pieces of information
-   - If the user provides only one piece of information, politely ask for the missing information
-2. Example responses for collecting information:
-   English:
-   - "I'll help transfer you to a human agent. Could you please provide:
-     1. Your email address for follow-up
-     2. A brief description of your concern"
-   German:
-   - "Ich helfe Ihnen gerne bei der Weiterleitung an einen Mitarbeiter. Bitte teilen Sie mir mit:
-     1. Ihre E-Mail-Adresse für die weitere Kommunikation
-     2. Eine kurze Beschreibung Ihres Anliegens"
-
 ${toolsInfo.map(tool => `
 ${tool.name}:
 - Description: ${tool.description}

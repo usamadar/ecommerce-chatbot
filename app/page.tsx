@@ -1,7 +1,7 @@
 'use client'
 
 import { useChat } from 'ai/react'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { ChatHeader } from '@/components/chat/ChatHeader'
 import { ChatContainer } from '@/components/chat/ChatContainer'
 import type { Message } from 'ai/react'
@@ -40,15 +40,16 @@ export default function ChatInterface() {
   })
 
   useEffect(() => {
-    const lastMessage = messages[messages.length - 1]
-    if (lastMessage?.role === 'assistant') {
+    const lastMessage: Message | undefined = messages[messages.length - 1]
+    if (lastMessage) {
+      // Handle order form visibility
       const isAskingForOrder = lastMessage.content.toLowerCase().includes('order') && 
         (lastMessage.content.toLowerCase().includes('email') || 
          lastMessage.content.toLowerCase().includes('order id') ||
          lastMessage.content.toLowerCase().includes('order number'))
-      
       setShowOrderForm(isAskingForOrder)
 
+      // Handle chat ended state
       const chatEndedPhrases = [
         'goodbye',
         'thank you',
@@ -60,24 +61,21 @@ export default function ChatInterface() {
       )
       setChatEnded(hasEnded)
 
-      const shouldShowTransferForm = shouldDisplayTransferForm(lastMessage, chatEnded, ratingSubmitted)
-      setShowTransferForm(shouldShowTransferForm)
+      // Handle transfer form visibility
+      const transferKeywords = ['transfer', 'human', 'agent', 'representative', 'person', 'support']
+      const isAskingForTransfer = transferKeywords.some(keyword => 
+        lastMessage.content.toLowerCase().includes(keyword)
+      )
+      const isTransferResponse = lastMessage.content.toLowerCase().includes('support ticket has been created')
+      
+      setShowTransferForm(
+        isAskingForTransfer &&
+        !isTransferResponse &&
+        !chatEnded &&
+        !ratingSubmitted
+      )
     }
   }, [messages, chatEnded, ratingSubmitted])
-
-  const shouldDisplayTransferForm = useCallback((message: Message, chatEnded: boolean, ratingSubmitted: boolean) => {
-    const transferKeywords = ['transfer', 'human', 'agent']
-    const isAskingForTransfer = transferKeywords.some(keyword => 
-      message.content.toLowerCase().includes(keyword)
-    )
-    
-    const isTransferResponse = message.content.toLowerCase().includes('support ticket has been created')
-    
-    return isAskingForTransfer && 
-      !isTransferResponse &&
-      !chatEnded &&
-      !ratingSubmitted
-  }, [])
 
   const handleTransferRequest = async (email: string, reason: string) => {
     setShowTransferForm(false)

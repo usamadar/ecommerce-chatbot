@@ -32,15 +32,6 @@ Before you begin, ensure you have:
     ```bash
     npm install
     ```
-
-3. Set up environment variables:
-    Create a `.env` file in the root directory and add the following variables:
-    ```
-    SHOPIFY_API_KEY=your_shopify_api_key
-    SHOPIFY_API_SECRET=your_shopify_api_secret
-    SHOPIFY_STORE_URL=your_shopify_store_url
-    ```
-
 ## Installation
 
 1. Clone the repository:

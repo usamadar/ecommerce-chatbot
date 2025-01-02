@@ -182,7 +182,3 @@ Common issues and solutions:
 ## Support
 
 For issues and feature requests, please create an issue in the repository's issue tracker.
-
-## License
-
-This project is proprietary and confidential. Unauthorized copying, modification, distribution, or use is strictly prohibited.
